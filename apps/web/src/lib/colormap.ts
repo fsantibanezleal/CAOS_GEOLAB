@@ -38,3 +38,13 @@ export const VIRIDIS = rampFn([
   [0.75, [94, 201, 98]],
   [1, [253, 231, 37]],
 ]);
+
+/** Neutral grayscale. */
+export const GRAY = rampFn([
+  [0, [12, 14, 16]],
+  [1, [244, 246, 248]],
+]);
+
+/** Named colormap registry for the layer renderer. */
+export const CMAPS: Record<string, (t: number) => RGB> = { viridis: VIRIDIS, terrain: TERRAIN, gray: GRAY };
+export type CmapName = keyof typeof CMAPS;
