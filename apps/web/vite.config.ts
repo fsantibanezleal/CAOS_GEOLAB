@@ -8,6 +8,9 @@ const base = process.env.VITE_BASE_URL ?? '/';
 export default defineConfig({
   base,
   plugins: [react()],
+  // geolibre-wasm ships a big WASI .wasm it resolves via import.meta.url — let Vite treat it as an asset
+  // (don't pre-bundle), so the URL resolves and the engine loads on demand.
+  optimizeDeps: { exclude: ['geolibre-wasm'] },
   build: {
     target: 'es2022',
     sourcemap: true,

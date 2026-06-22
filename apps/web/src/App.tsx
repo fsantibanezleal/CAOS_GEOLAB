@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import { Layout } from './shell/Layout';
 import { Workbench } from './pages/Workbench';
+import { Tools } from './pages/Tools';
 import { Credits } from './pages/Credits';
 
 export function App() {
@@ -8,6 +9,7 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Workbench />} />
+        <Route path="/tools" element={<Tools />} />
         <Route path="/credits" element={<Credits />} />
       </Route>
     </Routes>
