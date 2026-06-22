@@ -3,6 +3,26 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.03.000] — 2026-06-22
+
+### Added — first real analysis, end-to-end, in the browser
+- The **Workbench runs a real WhiteboxTools tool — Slope — entirely client-side**: generate a synthetic
+  georeferenced DEM, auto-form the tool's params (input layer / units / z_factor) from its ParamSchema, run
+  it via the WASM engine, and render the COG result on an interactive canvas (colormap + value read-out at
+  the cursor) with the tool's provenance chip and run log.
+- New pieces: `tool-core` **InMemoryFS**; **RasterCanvas** (colormap + hover read-out — the interactivity
+  rubric); **ParamForm** (auto-form generated from a ParamSchema — the QGIS-Processing pattern); `colormap`
+  (TERRAIN / VIRIDIS); a synthetic-DEM generator.
+- **All raster I/O goes through geolibre's OWN browser lib** (`CogBuilder.write_f32` +
+  `geotiff_read_band_f64`). geotiff.js mis-encodes/mis-decodes geolibre's tiled COGs (confirmed by probing:
+  garbage pixels → a bogus slope cliff), so it was dropped. Verified in Node: slope 0.02–11.6°, flat at
+  summits, steep on flanks.
+- **Screenshot-verified** (headless Chromium): DEM + slope render correctly (slope shows the expected
+  high-slope rings around the hill flanks), `exit 0`, 0 console errors, light + dark.
+
+### Changed
+- Dropped the `geotiff` dependency — replaced entirely by geolibre's reader/writer.
+
 ## [0.02.000] — 2026-06-22
 
 ### Added — the real geolibre engine, live in the browser
