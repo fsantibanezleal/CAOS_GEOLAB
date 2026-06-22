@@ -3,6 +3,26 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.04.000] — 2026-06-22
+
+### Added — the generic workbench (run ANY of the 747 tools)
+- Replaced the slope-only demo with a real **3-column workbench**: a **Toolbox** (all 747 tools, by
+  category, searchable) → pick any → its **auto-form** (from the ParamSchema) → **Run** on the active layer;
+  a **Layers** panel (sample DEM, uploads, tool outputs) with click-to-render + remove; and a canvas that
+  renders the active raster layer with a **colormap selector** (viridis / terrain / gray) + value read-out
+  at the cursor.
+- **Bring-your-own GeoTIFF** — upload a raster (read with geolibre's reader) and it becomes a layer you can
+  run tools on. Your data never leaves the browser.
+- Tool outputs become new raster layers, with provenance/lineage (`producedBy`).
+- New components: `Toolbox`, `LayersPanel`; the Workbench is now a workspace (InMemoryFS + layers + tools).
+- **Screenshot-verified** (headless Chromium): generate DEM → pick **Slope from the 747-tool tree** → run →
+  2 layers, the result renders correctly, `exit 0`, 0 console errors, light + dark.
+
+### Known / next
+- Some tools with implicit/all-output params render a minimal auto-form (they still run from defaults) — to
+  refine. A **Web-Worker** runner (off-main-thread + progress/cancel) and a **MapLibre** basemap (georef
+  overlay) are the next increments.
+
 ## [0.03.000] — 2026-06-22
 
 ### Added — first real analysis, end-to-end, in the browser
