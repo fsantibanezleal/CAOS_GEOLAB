@@ -1,0 +1,9 @@
+# GeoLab monorepo workspaces (ADR-0059, dossier 05 §5 — single repo, extraction-ready).
+#   apps/web            the React SPA (shell + workbench + pipeline editor)
+#   packages/tool-core  engine-agnostic abstractions (Tool/Layer/Pipeline/Project) + runner + provenance
+#   packages/adapters/* one adapter per WASM/JS engine (geolibre, gdal, geos, turf, h3, ...)
+#   packages/geolab-*   our own tools + shared UI
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/adapters/*"
