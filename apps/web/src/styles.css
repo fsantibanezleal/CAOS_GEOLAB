@@ -135,3 +135,27 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .tool-list li { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .7rem .8rem; }
 .tool-name { font-weight: 600; display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; }
 .tool-sum { color: var(--fg-subtle); font-size: .85rem; margin: .25rem 0 .45rem; }
+
+/* workbench run panel */
+.run-steps { display: grid; gap: 1rem; grid-template-columns: 1fr 1.4fr; align-items: start; margin: 1rem 0; }
+@media (max-width: 820px) { .run-steps { grid-template-columns: 1fr; } }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .9rem 1rem; }
+.step-h { display: flex; align-items: center; gap: .5rem; font-weight: 600; margin-bottom: .6rem; flex-wrap: wrap; }
+.step-n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: .8rem; }
+.pform { display: grid; gap: .6rem; margin-bottom: .8rem; }
+.pfield { display: grid; gap: .2rem; }
+.pfield label { font-size: .85rem; color: var(--fg-subtle); }
+.pfield .req { color: var(--accent); }
+.pfield input[type=text], .pfield input[type=number], .pfield select {
+  padding: .4rem .55rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.phelp { font-size: .78rem; color: var(--fg-subtle); }
+.raster-grid { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+.rcanvas { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .7rem; }
+.rtitle { font-weight: 600; margin-bottom: .4rem; }
+.rgrid { width: 340px; max-width: 80vw; height: auto; image-rendering: pixelated;
+  border-radius: 6px; border: 1px solid var(--border); display: block; }
+.rreadout { margin-top: .4rem; font-family: ui-monospace, monospace; font-size: .8rem; }
+.log { margin-top: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .6rem .8rem; }
+.log summary { cursor: pointer; font-weight: 600; }
+.log pre { margin: .5rem 0 0; overflow: auto; font-size: .8rem; color: var(--fg-subtle); }
