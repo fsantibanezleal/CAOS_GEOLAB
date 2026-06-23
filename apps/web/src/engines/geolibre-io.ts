@@ -5,7 +5,7 @@
  *
  * This loads geolibre's browser-lib wasm (~4.4 MB), separate from the WASI tool runner (~17.6 MB).
  */
-import init, { CogBuilder, geotiff_info, geotiff_read_band_f64 } from 'geolibre-wasm';
+import init, { CogBuilder, GeoTiffReader, geotiff_info, geotiff_read_band_f64 } from 'geolibre-wasm';
 import { gridStats, type Grid } from '../lib/grid';
 
 let inited: Promise<void> | null = null;
@@ -39,4 +39,20 @@ export async function readCogGrid(bytes: Uint8Array): Promise<Grid> {
   const info = JSON.parse(geotiff_info(bytes)) as { width: number; height: number };
   const values = Float32Array.from(geotiff_read_band_f64(bytes, 0));
   return gridStats(values, info.width, info.height);
+}
+
+/**
+ * Return the WGS84 bounding box [minLon, minLat, maxLon, maxLat] of a GeoTIFF/COG, or null if
+ * the raster has no spatial reference or geolibre cannot reproject it to WGS84.
+ */
+export async function readCogBoundsLonLat(bytes: Uint8Array): Promise<[number, number, number, number] | null> {
+  await ensureInit();
+  const reader = new GeoTiffReader(bytes);
+  const bbox = reader.bounds_lonlat();
+  reader.free();
+  if (bbox.length < 4) return null;
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  if (minLon === undefined || minLat === undefined || maxLon === undefined || maxLat === undefined) return null;
+  if (!Number.isFinite(minLon) || !Number.isFinite(minLat) || !Number.isFinite(maxLon) || !Number.isFinite(maxLat)) return null;
+  return [minLon, minLat, maxLon, maxLat];
 }

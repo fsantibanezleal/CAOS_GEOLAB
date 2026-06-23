@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { InMemoryFS, type Layer, type ParamSchema, type Tool } from '@geolab/tool-core';
 import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
-import { readCogGrid } from '../engines/geolibre-io';
+import { readCogGrid, readCogBoundsLonLat } from '../engines/geolibre-io';
 import { writeSyntheticDem } from '../lib/dem';
 import type { Grid } from '../lib/grid';
 import { CMAPS, type CmapName } from '../lib/colormap';
 import { RasterCanvas } from '../components/RasterCanvas';
+import { MapView } from '../components/MapView';
 import { ParamForm } from '../components/ParamForm';
 import { Toolbox } from '../components/Toolbox';
 import { LayersPanel } from '../components/LayersPanel';
@@ -18,6 +19,7 @@ interface WLayer {
   grid: Grid;
   unit?: string;
   cmap: CmapName;
+  lonLatBbox?: [number, number, number, number];
 }
 
 function defaultsFor(schema: ParamSchema, rasterLayerId: string | undefined): Record<string, unknown> {
@@ -45,6 +47,7 @@ export function Workbench() {
   const [query, setQuery] = useState('');
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'canvas' | 'map'>('canvas');
 
   const active = wlayers.find((w) => w.layer.id === activeId) ?? null;
   const selectedTool = tools.find((tl) => tl.id === selectedToolId) ?? null;
@@ -74,7 +77,8 @@ export function Workbench() {
       const id = `dem-${++idRef.current}`;
       const ref = `data/${id}.tif`;
       fsRef.current.set(ref, bytes);
-      addLayer({ layer: { id, name: 'Synthetic DEM (30 m, UTM 19S)', kind: 'raster', crs: 'EPSG:32719', format: 'GTiff', bytesRef: ref }, grid, unit: 'm', cmap: 'terrain' });
+      const lonLatBbox = await readCogBoundsLonLat(bytes) ?? undefined;
+      addLayer({ layer: { id, name: 'Synthetic DEM (30 m, UTM 19S)', kind: 'raster', crs: 'EPSG:32719', format: 'GTiff', bytesRef: ref }, grid, unit: 'm', cmap: 'terrain', lonLatBbox });
       await ensureEngine();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -85,11 +89,11 @@ export function Workbench() {
     setError(null);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const grid = await readCogGrid(bytes);
+      const [grid, lonLatBbox] = await Promise.all([readCogGrid(bytes), readCogBoundsLonLat(bytes)]);
       const id = `up-${++idRef.current}`;
       const ref = `data/${id}.tif`;
       fsRef.current.set(ref, bytes);
-      addLayer({ layer: { id, name: file.name, kind: 'raster', format: 'GeoTIFF', bytesRef: ref }, grid, cmap: 'viridis' });
+      addLayer({ layer: { id, name: file.name, kind: 'raster', format: 'GeoTIFF', bytesRef: ref }, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined });
       await ensureEngine();
     } catch (e) {
       setError(`${file.name}: ${e instanceof Error ? e.message : String(e)} — is it a single-band GeoTIFF raster?`);
@@ -124,7 +128,7 @@ export function Workbench() {
         if (out.kind === 'raster') {
           const ref = `data/${id}.tif`;
           await fsRef.current.write(ref, out.bytes);
-          const grid = await readCogGrid(out.bytes);
+          const [grid, lonLatBbox] = await Promise.all([readCogGrid(out.bytes), readCogBoundsLonLat(out.bytes)]);
           const layer: Layer = {
             id,
             name: `${selectedTool.name} · ${out.name}`,
@@ -133,7 +137,7 @@ export function Workbench() {
             bytesRef: ref,
             producedBy: [selectedTool.provenance],
           };
-          setWlayers((prev) => [{ layer, grid, cmap: 'viridis' }, ...prev]);
+          setWlayers((prev) => [{ layer, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined }, ...prev]);
           if (!firstOut) firstOut = id;
         }
       }
@@ -193,10 +197,23 @@ export function Workbench() {
 
         <div className="wb-center">
           <div className="panel canvas-wrap">
-            {active ? (
-              <RasterCanvas grid={active.grid} colormap={CMAPS[active.cmap] ?? CMAPS.viridis!} unit={active.unit} decimals={1} title={active.layer.name} />
+            <div className="view-toggle">
+              <button type="button" className={viewMode === 'canvas' ? 'vtab on' : 'vtab'} onClick={() => setViewMode('canvas')}>Grid</button>
+              <button type="button" className={viewMode === 'map' ? 'vtab on' : 'vtab'} onClick={() => setViewMode('map')}>Map</button>
+            </div>
+            {viewMode === 'canvas' ? (
+              active ? (
+                <RasterCanvas grid={active.grid} colormap={CMAPS[active.cmap] ?? CMAPS.viridis!} unit={active.unit} decimals={1} title={active.layer.name} />
+              ) : (
+                <div className="map-note">{t('wb.canvasHint')}</div>
+              )
             ) : (
-              <div className="map-note">{t('wb.canvasHint')}</div>
+              <MapView
+                grid={active?.grid ?? null}
+                colormap={CMAPS[active?.cmap ?? 'viridis'] ?? CMAPS.viridis!}
+                lonLatBbox={active?.lonLatBbox ?? null}
+                title={active?.layer.name}
+              />
             )}
           </div>
           <LayersPanel
