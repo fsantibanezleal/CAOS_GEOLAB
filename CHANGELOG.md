@@ -3,6 +3,26 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.14.000] — 2026-06-23
+
+### Fixed — the 138 broken tools (D1 + D2)
+- **138 of 747 geolibre tools shipped EMPTY params** in the manifest (blank forms; runs failed "missing
+  required parameter 'input'"). Now FILLED from the authoritative WhiteboxTools metadata
+  (`packages/adapters/geolibre/src/whitebox-params.json`, baked offline via `data-pipeline/whitebox/`).
+  Key finding: geolibre (whitebox_next_gen) **renamed flags** vs standard WBT (`--input` not `--dem`,
+  `--target_size` not `--size`), so we synthesize geolibre-native names (`--input`/`--output` + the
+  manifest's own `defaults` keys) and use WBT only for the input KIND, enum OPTIONS and TYPES (which don't
+  drift). 102/138 covered by WBT v2.4.0 + the rest by category/`defaults` inference.
+- **D2 string-vs-file**: a `data_kind:'string'` input whose default looks like a file (`samples.gpkg`) or is
+  a known I/O name now renders a layer picker instead of a text box.
+- The augmentation mutates the cached manifest params so the form, the main-thread `run()` AND the worker's
+  `collectRunArgs()` all use the synthesized set.
+- **Screenshot-verified** (headless): Aspect (was blank) now shows the input picker + runs (correct aspect
+  map, `exit 0`); Isobasins runs (`exit 0`, no more "missing required parameter 'input'"); 0 console errors.
+
+### Tooling
+- `data-pipeline/whitebox/dump_params.py` (offline `.venv`) dumps WhiteboxTools params → the committed JSON.
+
 ## [0.13.000] — 2026-06-23
 
 ### Added — ⓘ Architecture modal (ADR-0058: 4-tab themed SVG explainer)
