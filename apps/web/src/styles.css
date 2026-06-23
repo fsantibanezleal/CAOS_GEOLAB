@@ -218,6 +218,30 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
   margin-top: .35rem; font-family: ui-monospace, monospace;
 }
 
+/* param form improvements */
+.pform-empty {
+  margin: .5rem 0 .8rem; padding: .55rem .8rem;
+  background: var(--accent-soft); border: 1px dashed var(--accent);
+  border-radius: 8px; font-size: .88rem; color: var(--fg-subtle);
+}
+.pfield-err input, .pfield-err select, .pfield-err textarea {
+  border-color: var(--bad) !important;
+}
+.pfield-errmsg { font-size: .78rem; color: var(--bad); }
+.opt { color: var(--fg-subtle); font-size: .78em; }
+.pform-hint { font-size: .82rem; color: var(--fg-subtle); display: block; padding: .2rem 0; }
+.pfield textarea { width: 100%; padding: .4rem .55rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); resize: vertical; }
+.toggle-wrap { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; }
+.toggle-label { font-size: .85rem; color: var(--fg-subtle); }
+/* extent 4-input bbox grid */
+.extent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; }
+.extent-cell { display: flex; flex-direction: column; gap: .1rem; }
+.extent-label { font-size: .72rem; color: var(--fg-subtle); }
+.extent-cell input { width: 100%; padding: .35rem .45rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: .85rem; }
+/* file widget */
+.file-widget { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.file-btn { margin-top: 0 !important; padding: .35rem .7rem; font-size: .85rem; font-weight: 500; }
+
 /* view toggle (Grid | Map) */
 .view-toggle {
   display: flex; gap: 2px; background: var(--surface-2);

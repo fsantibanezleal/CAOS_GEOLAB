@@ -181,6 +181,11 @@ export function guessOutputKind(name: string): PortKind {
   return 'text';
 }
 
+/** Detect a FileValue written by the ParamForm FileWidget ({name, bytes}). */
+function isFileValue(v: unknown): v is { name: string; bytes: Uint8Array } {
+  return typeof v === 'object' && v !== null && 'name' in v && 'bytes' in v && (v as { bytes: unknown }).bytes instanceof Uint8Array;
+}
+
 /**
  * Build the CLI args + input-file bytes for a geolibre tool run, from the manifest, user-supplied
  * values, and the workspace layers/FS. Called on the main thread before handing off to the Web Worker.
@@ -210,6 +215,13 @@ export async function collectRunArgs(
           args.push(`--${p.name}=/work/${fname}`);
         }
       }
+    } else if (isFileValue(v)) {
+      // User-picked file from the ParamForm FileWidget.
+      input[v.name] = v.bytes;
+      args.push(`--${p.name}=/work/${v.name}`);
+    } else if (Array.isArray(v)) {
+      // Extent / bbox: [minX, minY, maxX, maxY] → comma-separated.
+      args.push(`--${p.name}=${v.join(',')}`);
     } else if (v !== undefined && v !== null && v !== '') {
       args.push(`--${p.name}=${String(v)}`);
     }
