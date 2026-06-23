@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+# Builds the static SPA and publishes it to GitHub Pages on every push to main.
+# Prerequisites (one-time, see CAOS_MANAGE deployments/geolab.md):
+#   1. Repo must be PUBLIC (Pages + custom domain on a private repo needs a paid plan).
+#   2. Settings -> Pages -> Source = "GitHub Actions".
+#   3. Custom domain set via: gh api -X PUT repos/fsantibanezleal/CAOS_GEOLAB/pages -f cname=geolab.fasl-work.com
+#      (the public/CNAME file alone does NOT set it on Actions deploys), plus the DNS CNAME record.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the SPA (custom-domain base)
+        run: pnpm -C apps/web build
+        env:
+          VITE_BASE_URL: /
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
