@@ -287,6 +287,31 @@ export function Workbench() {
     setWlayers((prev) => prev.map((w) => (w.layer.id === activeId ? { ...w, cmap } : w)));
   }
 
+  /** D4: download any layer (sample, upload, or tool output) as a real file. */
+  async function downloadLayer(id: string) {
+    const w = wlayers.find((x) => x.layer.id === id);
+    if (!w) return;
+    const bytes = await fsRef.current.read(w.layer.bytesRef);
+    const ext = (w.layer.bytesRef.split('.').pop() ?? 'bin').toLowerCase();
+    const mime =
+      ext === 'tif' || ext === 'tiff' ? 'image/tiff'
+      : ext === 'geojson' || ext === 'json' ? 'application/geo+json'
+      : ext === 'csv' ? 'text/csv'
+      : ext === 'html' ? 'text/html'
+      : 'application/octet-stream';
+    let fname = w.layer.name.includes('·') ? (w.layer.name.split('·').pop() ?? id).trim() : w.layer.name.replace(/[^\w.-]+/g, '_');
+    if (!/\.[a-z0-9]+$/i.test(fname)) fname += `.${ext}`;
+    const blob = new Blob([bytes as BlobPart], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   const showTextPanel = activeKind !== null && isTextKind(activeKind);
   const canvasTabDisabled = activeKind === 'vector';
 
@@ -395,6 +420,7 @@ export function Workbench() {
               setWlayers((prev) => prev.filter((w) => w.layer.id !== id));
               if (activeId === id) setActiveId(null);
             }}
+            onDownload={downloadLayer}
           />
         </div>
 

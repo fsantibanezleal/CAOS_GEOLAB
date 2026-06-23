@@ -3,6 +3,13 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.15.000] — 2026-06-23
+
+### Added — D4: download tool outputs
+- Every workspace layer (sample, upload, or tool output) now has a **Download** button (↓) in the Layers
+  panel → saves the real file (raster `.tif` / vector `.geojson` / text) with the correct name + MIME type.
+- Verified (headless): running Aspect → its output layer downloads as `aspect_output.tif`, 0 console errors.
+
 ## [0.14.000] — 2026-06-23
 
 ### Fixed — the 138 broken tools (D1 + D2)

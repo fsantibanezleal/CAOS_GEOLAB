@@ -193,6 +193,8 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .layer-list .lk { font-size: .68rem; }
 .layer-list .lx { background: transparent; border: 0; color: var(--fg-subtle); cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0 .2rem; }
 .layer-list .lx:hover { color: var(--bad); }
+.layer-list .ld { background: transparent; border: 0; color: var(--fg-subtle); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 .15rem; }
+.layer-list .ld:hover { color: var(--accent); }
 .wb-right { min-height: 200px; }
 .wb-right .tool-sum { margin: .3rem 0 .7rem; }
 

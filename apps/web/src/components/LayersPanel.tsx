@@ -6,10 +6,11 @@ interface Props {
   activeId: string | null;
   onActivate: (id: string) => void;
   onRemove: (id: string) => void;
+  onDownload: (id: string) => void;
 }
 
 /** The workspace layers (sample DEM, uploads, tool outputs). Click to render; × to remove. */
-export function LayersPanel({ layers, activeId, onActivate, onRemove }: Props) {
+export function LayersPanel({ layers, activeId, onActivate, onRemove, onDownload }: Props) {
   const { t } = useTranslation();
   return (
     <div className="layers panel">
@@ -31,6 +32,18 @@ export function LayersPanel({ layers, activeId, onActivate, onRemove }: Props) {
             >
               <span className="ln">{l.name}</span>
               <span className="lk chip">{l.kind}</span>
+              <button
+                type="button"
+                className="ld"
+                aria-label={`download ${l.name}`}
+                title="Download"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDownload(l.id);
+                }}
+              >
+                ↓
+              </button>
               <button
                 type="button"
                 className="lx"

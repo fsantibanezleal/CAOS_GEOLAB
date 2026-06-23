@@ -55,7 +55,7 @@ export function Layout() {
           <a href={EXTERNAL_LINKS.personal} target="_blank" rel="noreferrer">Personal</a>
           <a href={EXTERNAL_LINKS.portfolio} target="_blank" rel="noreferrer">Portfolio</a>
         </span>
-        <span>{t('footer.license')} · v0.14.000</span>
+        <span>{t('footer.license')} · v0.15.000</span>
       </footer>
 
       {arch && <ArchModal onClose={() => setArch(false)} />}
