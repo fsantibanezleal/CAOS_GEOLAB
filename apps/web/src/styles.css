@@ -195,3 +195,25 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .layer-list .lx:hover { color: var(--bad); }
 .wb-right { min-height: 200px; }
 .wb-right .tool-sum { margin: .3rem 0 .7rem; }
+
+/* worker runner: progress + cancel */
+.run-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.run-actions .btn { margin-top: 0; }
+.btn-cancel {
+  margin-top: 0; padding: .6rem 1.1rem; border-radius: 9px; cursor: pointer;
+  background: var(--surface); color: var(--bad); border: 1px solid var(--bad); font-weight: 600;
+}
+.btn-cancel:hover { background: color-mix(in srgb, var(--bad) 10%, var(--surface)); }
+.run-progress-wrap {
+  margin: .6rem 0 .3rem;
+  background: var(--surface-2); border-radius: 6px; height: 6px; position: relative; overflow: hidden;
+}
+.run-progress-bar {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--accent); border-radius: 6px;
+  transition: width .25s ease; min-width: 4px;
+}
+.run-progress-msg {
+  display: block; font-size: .75rem; color: var(--fg-subtle);
+  margin-top: .35rem; font-family: ui-monospace, monospace;
+}

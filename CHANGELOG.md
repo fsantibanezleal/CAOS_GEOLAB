@@ -3,6 +3,23 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.05.000] — 2026-06-23
+
+### Added — Web Worker runner (off-main-thread WASM execution)
+- Tool runs are now **off the main thread**: a dedicated Web Worker loads the geolibre-wasm engine once
+  and handles all `runTool()` calls, so the browser UI stays fully responsive during the (sometimes
+  multi-second) WASM computation.
+- A **progress bar** (fraction 0→1 + status message) appears in the right panel while a tool runs.
+- A **Cancel button** aborts the pending result (the current WASM call completes inside the worker but
+  the output is discarded; the UI returns to idle immediately).
+- The worker is a module-level singleton — it lives across Workbench re-renders and warms up on the
+  first run (the engine loads once, subsequent runs skip the 22 MB WASM load).
+- New: `src/workers/geolibre-worker.ts` (the worker); `src/lib/useWorkerRunner.ts` (the React hook).
+- Adapter: `collectRunArgs()` and `guessOutputKind()` exported as standalone helpers so the main thread
+  can prepare run args + infer output types independently of the `Tool.run()` closure.
+- Engine loader: `getGeolibreManifest(toolId)` exported from `src/engines/geolibre.ts` (returns the
+  raw geolibre manifest for a given GeoLab tool id, from the in-memory manifest cache).
+
 ## [0.04.001] — 2026-06-22
 
 ### Added

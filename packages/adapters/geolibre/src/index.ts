@@ -170,12 +170,52 @@ function provenanceFor(source: string | undefined, version: string): Provenance 
   };
 }
 
-function guessOutputKind(name: string): PortKind {
+// ───────────────────────── worker-runner helpers ─────────────────────────
+
+/** Guess the PortKind of an output file from its extension. */
+export function guessOutputKind(name: string): PortKind {
   if (/\.(tif|tiff|png)$/i.test(name)) return 'raster';
   if (/\.(geojson|json|shp|fgb|gpkg)$/i.test(name)) return 'vector';
   if (/\.(las|laz)$/i.test(name)) return 'pointcloud';
   if (/\.(csv|html)$/i.test(name)) return 'table';
   return 'text';
+}
+
+/**
+ * Build the CLI args + input-file bytes for a geolibre tool run, from the manifest, user-supplied
+ * values, and the workspace layers/FS. Called on the main thread before handing off to the Web Worker.
+ */
+export async function collectRunArgs(
+  manifest: GeolibreManifest,
+  values: Record<string, unknown>,
+  getLayer: (id: string) => { id: string; bytesRef: string } | undefined,
+  readBytes: (ref: string) => Promise<Uint8Array>,
+): Promise<{ args: string[]; input: Record<string, Uint8Array> }> {
+  const args: string[] = [];
+  const input: Record<string, Uint8Array> = {};
+
+  for (const p of manifest.params) {
+    const v = values[p.name];
+    if (p.io_role === 'output') {
+      const def = manifest.defaults?.[p.name];
+      const outName =
+        typeof v === 'string' && v ? v : typeof def === 'string' ? def : `${manifest.id}_${p.name}${extOf(p.data_kind)}`;
+      args.push(`--${p.name}=/work/${outName}`);
+    } else if (['raster', 'vector', 'lidar'].includes(p.data_kind ?? '')) {
+      if (typeof v === 'string') {
+        const layer = getLayer(v);
+        if (layer) {
+          const fname = `${p.name}_${layer.id}${extOf(p.data_kind)}`;
+          input[fname] = await readBytes(layer.bytesRef);
+          args.push(`--${p.name}=/work/${fname}`);
+        }
+      }
+    } else if (v !== undefined && v !== null && v !== '') {
+      args.push(`--${p.name}=${String(v)}`);
+    }
+  }
+
+  return { args, input };
 }
 
 // ───────────────────────── the builder ─────────────────────────
