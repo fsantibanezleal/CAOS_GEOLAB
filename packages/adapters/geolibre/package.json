@@ -1,6 +1,6 @@
 {
   "name": "@geolab/adapter-geolibre",
-  "version": "0.6.1",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "Adapter mapping geolibre-wasm (WhiteboxTools + GeoLibre, MIT) tools into the GeoLab Tool registry.",
