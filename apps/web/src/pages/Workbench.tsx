@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { InMemoryFS, type Layer, type ParamSchema, type Tool, type ToolRunContext } from '@geolab/tool-core';
-import { loadGeolibreTools } from '../engines/geolibre';
+import { InMemoryFS, type Layer, type ParamSchema, type Tool } from '@geolab/tool-core';
+import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
 import { readCogGrid } from '../engines/geolibre-io';
 import { writeSyntheticDem } from '../lib/dem';
 import type { Grid } from '../lib/grid';
@@ -11,6 +11,7 @@ import { RasterCanvas } from '../components/RasterCanvas';
 import { ParamForm } from '../components/ParamForm';
 import { Toolbox } from '../components/Toolbox';
 import { LayersPanel } from '../components/LayersPanel';
+import { useWorkerRunner } from '../lib/useWorkerRunner';
 
 interface WLayer {
   layer: Layer;
@@ -32,6 +33,8 @@ export function Workbench() {
   const { t } = useTranslation();
   const fsRef = useRef(new InMemoryFS());
   const idRef = useRef(0);
+  const { state: workerState, progress, run: runInWorker, cancel } = useWorkerRunner();
+  const running = workerState === 'running';
 
   const [tools, setTools] = useState<Tool[]>([]);
   const [engineLoading, setEngineLoading] = useState(false);
@@ -40,7 +43,6 @@ export function Workbench() {
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const [params, setParams] = useState<Record<string, unknown>>({});
   const [query, setQuery] = useState('');
-  const [running, setRunning] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +85,7 @@ export function Workbench() {
     setError(null);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const grid = await readCogGrid(bytes); // throws if not a readable raster
+      const grid = await readCogGrid(bytes);
       const id = `up-${++idRef.current}`;
       const ref = `data/${id}.tif`;
       fsRef.current.set(ref, bytes);
@@ -102,36 +104,44 @@ export function Workbench() {
   }
 
   async function runSelected() {
-    if (!selectedTool) return;
-    setRunning(true);
+    if (!selectedTool || running) return;
     setError(null);
     setLog([]);
+
+    const manifest = getGeolibreManifest(selectedTool.id);
+    if (!manifest) {
+      // Fallback: run on main thread (non-geolibre tools, future adapters).
+      setError(`No geolibre manifest found for "${selectedTool.id}" — main-thread fallback not implemented yet.`);
+      return;
+    }
+
     try {
-      const ctx: ToolRunContext = {
-        fs: fsRef.current,
-        layer: (lid) => wlayers.find((w) => w.layer.id === lid)?.layer,
-        signal: new AbortController().signal,
-        onProgress: () => {},
-      };
-      const res = await selectedTool.run(ctx, params);
+      const result = await runInWorker(manifest, params, wlayers.map((w) => w.layer), fsRef.current);
+
       let firstOut: string | null = null;
-      for (const out of res.outputs) {
-        if (!out.bytesRef) continue;
+      for (const out of result.outputs) {
         const id = `${selectedTool.id.replace(/[^a-z0-9]+/gi, '_')}-${++idRef.current}`;
         if (out.kind === 'raster') {
-          const grid = await readCogGrid(await fsRef.current.read(out.bytesRef));
-          fsRef.current.set(`data/${id}.tif`, await fsRef.current.read(out.bytesRef));
-          const layer: Layer = { id, name: `${selectedTool.name} · ${out.name}`, kind: 'raster', format: out.format, bytesRef: `data/${id}.tif`, producedBy: [selectedTool.provenance] };
+          const ref = `data/${id}.tif`;
+          await fsRef.current.write(ref, out.bytes);
+          const grid = await readCogGrid(out.bytes);
+          const layer: Layer = {
+            id,
+            name: `${selectedTool.name} · ${out.name}`,
+            kind: 'raster',
+            format: out.format,
+            bytesRef: ref,
+            producedBy: [selectedTool.provenance],
+          };
           setWlayers((prev) => [{ layer, grid, cmap: 'viridis' }, ...prev]);
           if (!firstOut) firstOut = id;
         }
       }
       if (firstOut) setActiveId(firstOut);
-      setLog(['exit 0', ...(res.log ?? [])]);
+      setLog(['exit 0', ...result.log]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setRunning(false);
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg !== 'Cancelled') setError(msg);
     }
   }
 
@@ -211,9 +221,25 @@ export function Workbench() {
               </div>
               <p className="tool-sum">{selectedTool.summary}</p>
               <ParamForm schema={selectedTool.params} values={params} onChange={(k, v) => setParams((p) => ({ ...p, [k]: v }))} layers={wlayers.map((w) => w.layer)} />
-              <button type="button" className="btn" onClick={runSelected} disabled={running}>
-                {running ? t('wb.running') : t('wb.runTool')}
-              </button>
+
+              <div className="run-actions">
+                <button type="button" className="btn" onClick={runSelected} disabled={running}>
+                  {running ? t('wb.running') : t('wb.runTool')}
+                </button>
+                {running && (
+                  <button type="button" className="btn btn-cancel" onClick={cancel}>
+                    {t('wb.cancel')}
+                  </button>
+                )}
+              </div>
+
+              {running && (
+                <div className="run-progress-wrap">
+                  <div className="run-progress-bar" style={{ width: `${Math.round(progress.fraction * 100)}%` }} />
+                  {progress.message && <span className="run-progress-msg">{progress.message}</span>}
+                </div>
+              )}
+
               {log.length > 0 && (
                 <details className="log" open>
                   <summary>{t('wb.log')}</summary>
@@ -228,7 +254,7 @@ export function Workbench() {
       </div>
 
       <p className="muted measure" style={{ marginTop: '1.5rem' }}>
-        {t('wb.note')} <Link to="/tools">{t('nav.tools')}</Link> · <Link to="/credits">{t('nav.credits')}</Link>
+        {t('wb.workerNote')} {t('wb.note')} <Link to="/tools">{t('nav.tools')}</Link> · <Link to="/credits">{t('nav.credits')}</Link>
       </p>
     </div>
   );
