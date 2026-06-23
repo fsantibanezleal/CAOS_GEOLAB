@@ -95,7 +95,7 @@ function applyVectorOverlay(
   if (src) {
     src.setData(geojson as unknown as Parameters<GeoJSONSource['setData']>[0]);
   } else {
-    map.addSource(VEC_SRC, { type: 'geojson', data: geojson as unknown as Parameters<maplibregl.Map['addSource']>[1] & { data: unknown } });
+    map.addSource(VEC_SRC, { type: 'geojson', data: geojson as unknown as Parameters<GeoJSONSource['setData']>[0] });
     map.addLayer({
       id: VEC_FILL, type: 'fill', source: VEC_SRC,
       filter: ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]],
