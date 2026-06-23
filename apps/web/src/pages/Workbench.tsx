@@ -30,11 +30,19 @@ interface WLayer {
   textContent?: string;
 }
 
-function defaultsFor(schema: ParamSchema, rasterLayerId: string | undefined): Record<string, unknown> {
+function defaultsFor(
+  schema: ParamSchema,
+  rasterLayerId: string | undefined,
+  vectorLayerId: string | undefined,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, spec] of Object.entries(schema)) {
-    if (spec.type === 'layer' && spec.accepts.includes('raster') && rasterLayerId) out[k] = rasterLayerId;
-    else if ('default' in spec && spec.default !== undefined) out[k] = spec.default;
+    if (spec.type === 'layer') {
+      if (spec.accepts.includes('raster') && rasterLayerId) out[k] = rasterLayerId;
+      else if (spec.accepts.includes('vector') && vectorLayerId) out[k] = vectorLayerId;
+    } else if ('default' in spec && spec.default !== undefined) {
+      out[k] = spec.default;
+    }
   }
   return out;
 }
@@ -64,7 +72,20 @@ export function Workbench() {
   const active = wlayers.find((w) => w.layer.id === activeId) ?? null;
   const activeKind = active?.layer.kind ?? null;
   const selectedTool = tools.find((tl) => tl.id === selectedToolId) ?? null;
-  const firstRasterId = (over?: string) => over ?? wlayers.find((w) => w.layer.kind === 'raster')?.layer.id;
+  const firstRasterId = (over?: string) => {
+    if (over) {
+      const w = wlayers.find((w) => w.layer.id === over);
+      if (w?.layer.kind === 'raster') return over;
+    }
+    return wlayers.find((w) => w.layer.kind === 'raster')?.layer.id;
+  };
+  const firstVectorId = (over?: string) => {
+    if (over) {
+      const w = wlayers.find((w) => w.layer.id === over);
+      if (w?.layer.kind === 'vector') return over;
+    }
+    return wlayers.find((w) => w.layer.kind === 'vector')?.layer.id;
+  };
 
   // Auto-switch to Map view when a vector layer becomes active.
   useEffect(() => {
@@ -104,7 +125,7 @@ export function Workbench() {
     }
   }
 
-  async function uploadFile(file: File) {
+  async function uploadRasterFile(file: File) {
     setError(null);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -119,10 +140,43 @@ export function Workbench() {
     }
   }
 
+  async function uploadGeoJSONFile(file: File) {
+    setError(null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const geojson = parseGeoJSON(bytes);
+      const geoBbox = geojsonBbox(geojson) ?? undefined;
+      const { count, types } = geojsonSummary(geojson);
+      const id = `up-${++idRef.current}`;
+      const ref = `data/${id}.geojson`;
+      fsRef.current.set(ref, bytes);
+      addLayer({
+        layer: { id, name: file.name, kind: 'vector', format: 'GeoJSON', bytesRef: ref },
+        cmap: 'viridis',
+        geojson,
+        geoBbox,
+      });
+      setLog([`Loaded: ${count} features (${types.join(', ')})`]);
+      await ensureEngine();
+    } catch (e) {
+      setError(`${file.name}: ${e instanceof Error ? e.message : String(e)} — is it a valid GeoJSON file?`);
+    }
+  }
+
+  function handleFileUpload(file: File) {
+    if (/\.(geojson|json)$/i.test(file.name)) {
+      void uploadGeoJSONFile(file);
+    } else {
+      void uploadRasterFile(file);
+    }
+  }
+
   function selectTool(id: string) {
     setSelectedToolId(id);
     const tool = tools.find((tl) => tl.id === id);
-    if (tool) setParams(defaultsFor(tool.params, firstRasterId(activeId ?? undefined)));
+    if (tool) {
+      setParams(defaultsFor(tool.params, firstRasterId(activeId ?? undefined), firstVectorId(activeId ?? undefined)));
+    }
     setLog([]);
   }
 
@@ -240,7 +294,7 @@ export function Workbench() {
         </button>
         <label className="btn btn-ghost">
           {t('wb.upload')}
-          <input type="file" accept=".tif,.tiff" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadFile(f); e.target.value = ''; }} />
+          <input type="file" accept=".tif,.tiff,.geojson,.json" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); e.target.value = ''; }} />
         </label>
         {active && activeKind === 'raster' && (
           <label className="cmap-pick">

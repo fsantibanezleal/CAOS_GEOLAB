@@ -3,6 +3,31 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.09.000] — 2026-06-23
+
+### Added — GeoJSON upload (bring-your-own vector layer)
+
+- **GeoJSON upload**: the "Upload layer" toolbar button now accepts both `.tif/.tiff` (raster) and
+  `.geojson/.json` (vector). The file type is detected by extension; GeoJSON files go through
+  `uploadGeoJSONFile()` instead of the raster path.
+- **uploadGeoJSONFile**: reads bytes, calls `parseGeoJSON()` + `geojsonBbox()` + `geojsonSummary()`,
+  stores bytes in the virtual FS under `data/<id>.geojson`, and adds a `WLayer` with
+  `kind: 'vector'`, `geojson`, and `geoBbox` set. The layer appears immediately in the Layers panel,
+  auto-switches to Map view, and the MapView renders it via the existing `applyVectorOverlay()` path.
+- **Feature summary in log**: a `Loaded: N features (type…)` log line appears after upload,
+  mirroring the log entry written for tool-produced vector outputs.
+- **Vector layer as tool input**: `defaultsFor()` now accepts a `vectorLayerId` argument and
+  pre-fills tool parameters of `type: 'layer', accepts: ['vector']` with the first available vector
+  layer (or the active layer if it is a vector). `selectTool()` passes `firstVectorId()` to it.
+  `collectRunArgs()` already handled vector layers via `bytesRef` — no adapter changes needed.
+- **firstVectorId helper**: mirrors `firstRasterId()`, finds the first vector layer in the workspace
+  (preferring the active layer if it matches).
+- **i18n**: `wb.upload` → "Upload layer" / "Subir capa"; `wb.toolboxHint` + `wb.intro` + `layers.none`
+  updated to mention GeoJSON; `wb.uploadHint` added (EN + ES) for future tooltip use.
+- All packages bumped to 0.9.0; footer display string → `v0.09.000`.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green.
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.08.000] — 2026-06-23
 
 ### Added — render non-raster tool outputs
