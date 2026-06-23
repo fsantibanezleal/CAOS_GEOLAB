@@ -48,6 +48,7 @@ export function Workbench() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'canvas' | 'map'>('canvas');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const active = wlayers.find((w) => w.layer.id === activeId) ?? null;
   const selectedTool = tools.find((tl) => tl.id === selectedToolId) ?? null;
@@ -100,17 +101,40 @@ export function Workbench() {
     }
   }
 
+  function validateParams(schema: ParamSchema, values: Record<string, unknown>): Record<string, string> {
+    const errs: Record<string, string> = {};
+    for (const [key, spec] of Object.entries(schema)) {
+      if (spec.type === 'output' || spec.type === 'boolean') continue;
+      const optional = 'optional' in spec && spec.optional;
+      if (optional) continue;
+      const v = values[key];
+      if (v === undefined || v === null || v === '') {
+        errs[key] = 'Required';
+      }
+    }
+    return errs;
+  }
+
   function selectTool(id: string) {
     setSelectedToolId(id);
     const tool = tools.find((tl) => tl.id === id);
     if (tool) setParams(defaultsFor(tool.params, firstRasterId(activeId ?? undefined)));
     setLog([]);
+    setFormErrors({});
   }
 
   async function runSelected() {
     if (!selectedTool || running) return;
     setError(null);
     setLog([]);
+
+    const errs = validateParams(selectedTool.params, params);
+    if (Object.keys(errs).length > 0) {
+      setFormErrors(errs);
+      setError('Fill in all required parameters before running.');
+      return;
+    }
+    setFormErrors({});
 
     const manifest = getGeolibreManifest(selectedTool.id);
     if (!manifest) {
@@ -237,7 +261,16 @@ export function Workbench() {
                 </span>
               </div>
               <p className="tool-sum">{selectedTool.summary}</p>
-              <ParamForm schema={selectedTool.params} values={params} onChange={(k, v) => setParams((p) => ({ ...p, [k]: v }))} layers={wlayers.map((w) => w.layer)} />
+              <ParamForm
+                schema={selectedTool.params}
+                values={params}
+                onChange={(k, v) => {
+                  setParams((p) => ({ ...p, [k]: v }));
+                  if (formErrors[k]) setFormErrors((e) => { const next = { ...e }; delete next[k]; return next; });
+                }}
+                layers={wlayers.map((w) => w.layer)}
+                errors={formErrors}
+              />
 
               <div className="run-actions">
                 <button type="button" className="btn" onClick={runSelected} disabled={running}>

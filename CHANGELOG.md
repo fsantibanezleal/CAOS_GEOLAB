@@ -3,6 +3,36 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.07.000] — 2026-06-23
+
+### Added — Refined auto-forms
+
+- **Output-only schema detection**: tools whose entire parameter schema consists only of output specs
+  (no input parameters) now render a clear "No input parameters required — click Run to proceed"
+  affordance instead of a silent empty form.
+- **Number/integer widgets**: `min`, `max`, and `step` constraints from `ParamSpec` are now passed to
+  the `<input type="number">` element, preventing out-of-range values at the browser level.
+- **Extent widget** (`type: 'extent'`): the "coming" placeholder is replaced with a real 4-input
+  bounding-box form (Min X / Min Y / Max X / Max Y). Values are stored as `[number, number, number,
+  number]` and formatted as a comma-separated string when passed as a CLI arg.
+- **Multiline string widget**: `ParamSpec` `{ type: 'string', multiline: true }` renders a `<textarea>`
+  instead of a single-line text input.
+- **File widget** (`type: 'file'`): replaces the "coming" placeholder with an `<input type="file">` that
+  reads the file bytes asynchronously (via `arrayBuffer()`) and stores `{ name, bytes }` in the params
+  state. `collectRunArgs` in `@geolab/adapter-geolibre` now handles these file-value objects — adds the
+  bytes to the input map and emits the correct `--param=/work/<name>` CLI argument.
+- **Layer availability hint**: when a `type: 'layer'` param requires a layer kind that has no matching
+  layers in the workspace (e.g. vector or pointcloud), the widget shows "No [kind] layers — generate or
+  upload one first" instead of an empty/confusing dropdown.
+- **Optional param label**: optional (non-required) parameters now show an `(optional)` label suffix,
+  making required vs optional fields immediately clear.
+- **Pre-run validation**: `runSelected()` in the Workbench now validates all required params before
+  dispatching to the Web Worker. Missing required fields are highlighted with a red border and an inline
+  "Required" error message; errors clear automatically as the user fills them in.
+- `collectRunArgs` now handles array values (extent `[minX,minY,maxX,maxY]` → comma-joined string) and
+  file-like values (`{name, bytes}` → added to the input map with a `/work/<name>` path arg).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.06.001] — 2026-06-23
 
 ### Fixed
