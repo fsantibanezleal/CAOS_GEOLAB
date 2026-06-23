@@ -230,6 +230,131 @@ export async function collectRunArgs(
   return { args, input };
 }
 
+// ───────────────────────── D1/D2: fill empty manifests + reclassify string-file inputs ─────────────────────────
+// geolibre-wasm@0.4.4 ships 138/747 tools with EMPTY params (blank forms; runs fail "missing required
+// parameter 'input'"). We fill them from the authoritative WhiteboxTools metadata (whitebox-params.json,
+// baked offline in data-pipeline/whitebox/). geolibre RENAMED flags vs standard WBT (it uses --input not
+// --dem, --target_size not --size), so we do NOT use WBT's flags — we synthesize geolibre-native names
+// (--input/--output + the manifest's own `defaults` keys) and use WBT only for the input KIND, enum OPTIONS
+// and param TYPES (which don't drift). See wip/geolab/remediation/01-whitebox-params-and-docs.md.
+import WBT from './whitebox-params.json';
+
+interface WbtParam {
+  name?: string;
+  flags?: string[];
+  description?: string;
+  parameter_type?: unknown;
+  default_value?: string | null;
+  optional?: boolean;
+}
+interface WbtTool {
+  tool: string;
+  description: string;
+  toolbox: string;
+  parameters: WbtParam[];
+}
+const WBT_TOOLS = (WBT as { tools: Record<string, WbtTool> }).tools;
+
+const FILE_EXT = /\.(tif|tiff|geojson|json|shp|fgb|gpkg|las|laz|zlidar|csv|dem|pmtiles|dat)$/i;
+const IO_NAMES = new Set([
+  'input', 'inputs', 'i', 'dem', 'pntr', 'pointer', 'streams', 'pour_pts', 'base', 'points',
+  'polygons', 'lines', 'raster', 'vector', 'lidar', 'fdir', 'flow_dir', 'd8_pntr',
+]);
+
+function extKind(name: string): 'raster' | 'vector' | 'lidar' | 'table' | undefined {
+  if (/\.(tif|tiff|dem|png)$/i.test(name)) return 'raster';
+  if (/\.(geojson|json|shp|fgb|gpkg|pmtiles)$/i.test(name)) return 'vector';
+  if (/\.(las|laz|zlidar)$/i.test(name)) return 'lidar';
+  if (/\.csv$/i.test(name)) return 'table';
+  return undefined;
+}
+function categoryInputKind(category?: string): 'raster' | 'vector' | 'lidar' {
+  const c = (category ?? '').toLowerCase();
+  if (c.includes('vector')) return 'vector';
+  if (c.includes('lidar')) return 'lidar';
+  return 'raster';
+}
+function wbtFileInner(pt: unknown): unknown {
+  if (pt && typeof pt === 'object') {
+    const o = pt as Record<string, unknown>;
+    for (const k of ['ExistingFile', 'ExistingFileOrFloat', 'FileList']) if (k in o) return o[k];
+  }
+  return undefined;
+}
+function wbtIsFileInput(p: WbtParam): boolean {
+  return wbtFileInner(p.parameter_type) !== undefined;
+}
+function wbtKind(inner: unknown): 'raster' | 'vector' | 'lidar' | 'file' {
+  if (inner === 'Raster') return 'raster';
+  if (inner === 'Lidar') return 'lidar';
+  if (inner && typeof inner === 'object' && ('Vector' in (inner as object) || 'RasterAndVector' in (inner as object))) return 'vector';
+  return 'file';
+}
+function wbtEnumFor(key: string, wbt?: WbtTool): string[] | undefined {
+  if (!wbt) return undefined;
+  const k = key.toLowerCase().replace(/_/g, '');
+  for (const p of wbt.parameters) {
+    const pt = p.parameter_type as { OptionList?: unknown } | undefined;
+    if (pt && Array.isArray(pt.OptionList)) {
+      const flags = (p.flags ?? []).map((f) => f.replace(/^-+/, '').replace(/-/g, '').toLowerCase());
+      if (flags.includes(k) || (p.name ?? '').toLowerCase().replace(/[^a-z]/g, '').includes(k)) {
+        return pt.OptionList as string[];
+      }
+    }
+  }
+  return undefined;
+}
+
+/** Synthesize geolibre-native params for a tool whose manifest params are empty (the 138-tool fix). */
+function synthesizeParams(m: GeolibreManifest): GeolibreParam[] {
+  const wbt = WBT_TOOLS[m.id];
+  const out: GeolibreParam[] = [];
+  const fileInputs = wbt ? wbt.parameters.filter(wbtIsFileInput) : [];
+  const multi = fileInputs.length >= 2 && fileInputs.every((f) => (f.flags ?? []).some((fl) => /input\d/i.test(fl)));
+  if (multi) {
+    fileInputs.forEach((f, i) =>
+      out.push({ name: `input${i + 1}`, data_kind: wbtKind(wbtFileInner(f.parameter_type)), io_role: 'input', required: true, schema: { kind: 'input' } }),
+    );
+  } else {
+    const k = fileInputs[0] ? wbtKind(wbtFileInner(fileInputs[0].parameter_type)) : categoryInputKind(m.category);
+    out.push({ name: 'input', data_kind: k === 'file' ? 'raster' : k, io_role: 'input', required: true, schema: { kind: 'input' } });
+  }
+  const outKind = out[0]?.data_kind ?? 'raster';
+  out.push({ name: 'output', data_kind: outKind, io_role: 'output', required: false, schema: { kind: 'output' } });
+  for (const [key, val] of Object.entries(m.defaults ?? {})) {
+    if (key === 'input' || key === 'output' || key.startsWith('input')) continue;
+    const enumVals = wbtEnumFor(key, wbt);
+    if (enumVals) {
+      out.push({ name: key, data_kind: 'string', io_role: 'input', required: false, schema: { kind: 'enum', values: enumVals } });
+    } else if (typeof val === 'boolean') {
+      out.push({ name: key, data_kind: 'bool', io_role: 'input', required: false });
+    } else if (typeof val === 'number') {
+      out.push({ name: key, data_kind: 'number', io_role: 'input', required: false });
+    } else if (typeof val === 'string' && FILE_EXT.test(val)) {
+      out.push({ name: key, data_kind: extKind(val) ?? 'file', io_role: 'input', required: false });
+    } else {
+      out.push({ name: key, data_kind: 'string', io_role: 'input', required: false });
+    }
+  }
+  return out;
+}
+
+/** Reclassify a data_kind:'string' input that is really a file (default looks like a path, or a known I/O name). */
+function reclassifyStringFile(p: GeolibreParam, defaults: Record<string, unknown> | undefined, category?: string): GeolibreParam {
+  if (p.data_kind !== 'string' || p.io_role === 'output') return p;
+  const def = defaults?.[p.name];
+  const looksFile = (typeof def === 'string' && FILE_EXT.test(def)) || IO_NAMES.has(p.name.toLowerCase());
+  if (!looksFile) return p;
+  const kind = (typeof def === 'string' ? extKind(def) : undefined) ?? categoryInputKind(category);
+  return { ...p, data_kind: kind };
+}
+
+/** The params GeoLab actually uses: real manifest params (reclassified), or synthesized when the manifest is empty. */
+function effectiveParams(m: GeolibreManifest): GeolibreParam[] {
+  if (m.params && m.params.length > 0) return m.params.map((p) => reclassifyStringFile(p, m.defaults, m.category));
+  return synthesizeParams(m);
+}
+
 // ───────────────────────── the builder ─────────────────────────
 
 /** Build all GeoLab Tools from geolibre manifests + the engine module (for run()). */
@@ -242,6 +367,9 @@ export function buildGeolibreTools(
 }
 
 function buildOne(m: GeolibreManifest, engine: GeolibreToolsModule, version: string): Tool {
+  // D1+D2: fill the 138 empty-manifest tools + reclassify string-file inputs. Mutate in place so run() and
+  // collectRunArgs (which both iterate m.params) see the corrected set.
+  m.params = effectiveParams(m);
   const params: ParamSchema = {};
   for (const p of m.params) params[p.name] = mapParam(p, m.defaults);
 
