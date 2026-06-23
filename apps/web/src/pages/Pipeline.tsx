@@ -27,6 +27,7 @@ import { Download, Play, StopCircle, Upload, X } from 'lucide-react';
 import { InMemoryFS, topologicalOrder, type Layer, type Tool, type ToolRunContext } from '@geolab/tool-core';
 import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
 import { loadTurfTools } from '../engines/turf';
+import { loadH3Tools } from '../engines/h3';
 import { collectRunArgs, guessOutputKind } from '@geolab/adapter-geolibre';
 import type { WorkerRunResult } from '../lib/useWorkerRunner';
 
@@ -164,7 +165,7 @@ export function Pipeline() {
     if (tools.length) return;
     setEngineLoading(true);
     loadGeolibreTools()
-      .then((geolibreTools) => setTools([...loadTurfTools(), ...geolibreTools]))
+      .then((geolibreTools) => setTools([...loadTurfTools(), ...loadH3Tools(), ...geolibreTools]))
       .finally(() => setEngineLoading(false));
   }, [tools.length]);
 
