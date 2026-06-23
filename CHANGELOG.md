@@ -3,6 +3,12 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.04.001] — 2026-06-22
+
+### Added
+- A **colorbar legend** under each raster canvas — the active colormap as a gradient + min / mid / max
+  labels (with units) — so the colormap is readable.
+
 ## [0.04.000] — 2026-06-22
 
 ### Added — the generic workbench (run ANY of the 747 tools)
