@@ -3,6 +3,37 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.10.000] — 2026-06-23
+
+### Added — Pipeline node editor (React Flow)
+
+- **Pipeline page** (`/pipeline` route) added to the navigation alongside Workbench / Tools / Credits.
+- **React Flow canvas** (`@xyflow/react ^12`): an interactive DAG editor where each node is a geolibre
+  tool. Nodes are draggable; handles on left (input) and right (output) can be connected by dragging.
+  Deleting a selected node with the Delete key removes it and its edges.
+- **Tool sidebar**: a searchable mini-toolbox (up to 80 results shown, refine-search hint) — clicking
+  any tool adds it as a new node on the canvas at a staggered position.
+- **Node configuration panel** (right): clicking a node shows the tool's name, engine chip, summary,
+  and an inline param form (number/integer/boolean/string/enum/layer inputs; output specs hidden).
+- **Topological execution**: "Run pipeline" calls `topologicalOrder()` from `@geolab/tool-core` to
+  compute the correct execution order, then runs each tool sequentially via the existing geolibre
+  worker. The first output of each upstream node is wired as an input byte buffer to the next
+  downstream node automatically (first-match approach).
+- **Node status badges**: idle / running (⏳) / done (✓) / error (✗) shown on each node, with outline
+  colour change (accent for selected, good/bad/warn for status).
+- **Pipeline run log**: a collapsible `<details>` in the right panel shows a per-node log entry after
+  the run, coloured by success/failure.
+- **Cancel**: the abort flag causes the execution loop to stop after the current node completes.
+- **Save Recipe**: "Save Recipe" button downloads the pipeline as a `geolab-recipe-<ts>.json`
+  (the `Recipe` type from `@geolab/tool-core`: schemaVersion 1, pipeline nodes/edges, toolVersions,
+  createdWith).
+- **Load Recipe**: "Load Recipe" button parses a previously saved JSON file and restores nodes, edges,
+  and per-node params, looking up tool names from the live catalog.
+- **Dark-mode overrides** for React Flow background, minimap, and controls.
+- All packages bumped to 0.10.0; footer display string → `v0.10.000`.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (1818 modules, 14.7 s).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.09.000] — 2026-06-23
 
 ### Added — GeoJSON upload (bring-your-own vector layer)

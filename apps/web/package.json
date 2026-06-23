@@ -1,6 +1,6 @@
 {
   "name": "@geolab/web",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "@geolab/adapter-geolibre": "workspace:*",
     "@geolab/geolab-tools": "workspace:*",
     "@geolab/tool-core": "workspace:*",
+    "@xyflow/react": "^12.11.1",
     "geolibre-wasm": "^0.4.4",
     "i18next": "^24.2.1",
     "lucide-react": "^0.469.0",
