@@ -3,6 +3,21 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.06.000] — 2026-06-23
+
+### Added — MapLibre basemap + COI serviceworker
+- **MapLibre GL JS basemap**: raster layers are now viewable as georeferenced overlays on an interactive
+  world basemap (MapLibre GL JS v5 + `demotiles.maplibre.org` style, no API key required).
+- **Grid / Map toggle** in the workbench center panel: switch between the pixel-grid canvas view
+  (colormap + value read-out) and the map view (basemap + raster overlay) for any active raster layer.
+- **Auto-WGS84 bounding box**: uses `GeoTiffReader.bounds_lonlat()` from geolibre-wasm to extract the
+  WGS84 geographic extent of any GeoTIFF/COG directly, without proj4 or a separate reprojection step.
+  The bounds are read for synthetic DEMs, uploaded files, and all tool outputs.
+- **`coi-serviceworker`**: installs a service worker that adds `Cross-Origin-Opener-Policy: same-origin`
+  and `Cross-Origin-Embedder-Policy: require-corp` headers — required for `SharedArrayBuffer` (WASM
+  threads) to work on GitHub Pages and other hosted environments.
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.05.000] — 2026-06-23
 
 ### Added — Web Worker runner (off-main-thread WASM execution)
