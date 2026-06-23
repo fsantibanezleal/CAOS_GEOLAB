@@ -1,6 +1,6 @@
 {
   "name": "@geolab/adapter-turf",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "private": true,
   "type": "module",
   "description": "Adapter mapping Turf.js (~100 MIT vector-analysis functions) into GeoLab Tool objects.",
