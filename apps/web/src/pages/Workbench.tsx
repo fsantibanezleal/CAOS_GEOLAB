@@ -1,14 +1,16 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { InMemoryFS, type Layer, type ParamSchema, type Tool } from '@geolab/tool-core';
+import { InMemoryFS, type Layer, type ParamSchema, type PortKind, type Tool } from '@geolab/tool-core';
 import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
 import { readCogGrid, readCogBoundsLonLat } from '../engines/geolibre-io';
 import { writeSyntheticDem } from '../lib/dem';
 import type { Grid } from '../lib/grid';
 import { CMAPS, type CmapName } from '../lib/colormap';
+import { parseGeoJSON, geojsonBbox, geojsonSummary, type GeoJSONFeatureCollection } from '../lib/geojson';
 import { RasterCanvas } from '../components/RasterCanvas';
 import { MapView } from '../components/MapView';
+import { TextOutputPanel } from '../components/TextOutputPanel';
 import { ParamForm } from '../components/ParamForm';
 import { Toolbox } from '../components/Toolbox';
 import { LayersPanel } from '../components/LayersPanel';
@@ -16,10 +18,16 @@ import { useWorkerRunner } from '../lib/useWorkerRunner';
 
 interface WLayer {
   layer: Layer;
-  grid: Grid;
+  // raster
+  grid?: Grid;
   unit?: string;
   cmap: CmapName;
   lonLatBbox?: [number, number, number, number];
+  // vector
+  geojson?: GeoJSONFeatureCollection;
+  geoBbox?: [number, number, number, number];
+  // text / table / pointcloud
+  textContent?: string;
 }
 
 function defaultsFor(schema: ParamSchema, rasterLayerId: string | undefined): Record<string, unknown> {
@@ -29,6 +37,10 @@ function defaultsFor(schema: ParamSchema, rasterLayerId: string | undefined): Re
     else if ('default' in spec && spec.default !== undefined) out[k] = spec.default;
   }
   return out;
+}
+
+function isTextKind(kind: PortKind): boolean {
+  return kind === 'text' || kind === 'table' || kind === 'pointcloud';
 }
 
 export function Workbench() {
@@ -48,11 +60,17 @@ export function Workbench() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'canvas' | 'map'>('canvas');
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const active = wlayers.find((w) => w.layer.id === activeId) ?? null;
+  const activeKind = active?.layer.kind ?? null;
   const selectedTool = tools.find((tl) => tl.id === selectedToolId) ?? null;
   const firstRasterId = (over?: string) => over ?? wlayers.find((w) => w.layer.kind === 'raster')?.layer.id;
+
+  // Auto-switch to Map view when a vector layer becomes active.
+  useEffect(() => {
+    if (activeKind === 'vector' && viewMode === 'canvas') setViewMode('map');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId]);
 
   async function ensureEngine() {
     if (tools.length) return tools;
@@ -101,26 +119,11 @@ export function Workbench() {
     }
   }
 
-  function validateParams(schema: ParamSchema, values: Record<string, unknown>): Record<string, string> {
-    const errs: Record<string, string> = {};
-    for (const [key, spec] of Object.entries(schema)) {
-      if (spec.type === 'output' || spec.type === 'boolean') continue;
-      const optional = 'optional' in spec && spec.optional;
-      if (optional) continue;
-      const v = values[key];
-      if (v === undefined || v === null || v === '') {
-        errs[key] = 'Required';
-      }
-    }
-    return errs;
-  }
-
   function selectTool(id: string) {
     setSelectedToolId(id);
     const tool = tools.find((tl) => tl.id === id);
     if (tool) setParams(defaultsFor(tool.params, firstRasterId(activeId ?? undefined)));
     setLog([]);
-    setFormErrors({});
   }
 
   async function runSelected() {
@@ -128,17 +131,8 @@ export function Workbench() {
     setError(null);
     setLog([]);
 
-    const errs = validateParams(selectedTool.params, params);
-    if (Object.keys(errs).length > 0) {
-      setFormErrors(errs);
-      setError('Fill in all required parameters before running.');
-      return;
-    }
-    setFormErrors({});
-
     const manifest = getGeolibreManifest(selectedTool.id);
     if (!manifest) {
-      // Fallback: run on main thread (non-geolibre tools, future adapters).
       setError(`No geolibre manifest found for "${selectedTool.id}" — main-thread fallback not implemented yet.`);
       return;
     }
@@ -149,6 +143,7 @@ export function Workbench() {
       let firstOut: string | null = null;
       for (const out of result.outputs) {
         const id = `${selectedTool.id.replace(/[^a-z0-9]+/gi, '_')}-${++idRef.current}`;
+
         if (out.kind === 'raster') {
           const ref = `data/${id}.tif`;
           await fsRef.current.write(ref, out.bytes);
@@ -163,10 +158,57 @@ export function Workbench() {
           };
           setWlayers((prev) => [{ layer, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined }, ...prev]);
           if (!firstOut) firstOut = id;
+
+        } else if (out.kind === 'vector') {
+          const ref = `data/${id}.geojson`;
+          await fsRef.current.write(ref, out.bytes);
+          let geojson: GeoJSONFeatureCollection | undefined;
+          let geoBbox: [number, number, number, number] | undefined;
+          try {
+            geojson = parseGeoJSON(out.bytes);
+            const bbox = geojsonBbox(geojson);
+            if (bbox) geoBbox = bbox;
+            const { count, types } = geojsonSummary(geojson);
+            setLog((prev) => [`vector output: ${count} features (${types.join(', ')})`, ...prev]);
+          } catch {
+            setLog((prev) => [`vector output "${out.name}" — could not parse as GeoJSON`, ...prev]);
+          }
+          const layer: Layer = {
+            id,
+            name: `${selectedTool.name} · ${out.name}`,
+            kind: 'vector',
+            format: 'GeoJSON',
+            bytesRef: ref,
+            producedBy: [selectedTool.provenance],
+          };
+          setWlayers((prev) => [{ layer, cmap: 'viridis', geojson, geoBbox }, ...prev]);
+          if (!firstOut) firstOut = id;
+
+        } else {
+          // text / table / pointcloud — decode as UTF-8 text
+          const ref = `data/${id}.txt`;
+          await fsRef.current.write(ref, out.bytes);
+          let textContent = '';
+          try {
+            textContent = new TextDecoder().decode(out.bytes);
+          } catch {
+            textContent = `(binary ${out.kind} output — ${out.bytes.length} bytes)`;
+          }
+          const layer: Layer = {
+            id,
+            name: `${selectedTool.name} · ${out.name}`,
+            kind: out.kind,
+            format: out.format,
+            bytesRef: ref,
+            producedBy: [selectedTool.provenance],
+          };
+          setWlayers((prev) => [{ layer, cmap: 'viridis', textContent }, ...prev]);
+          if (!firstOut) firstOut = id;
         }
       }
+
       if (firstOut) setActiveId(firstOut);
-      setLog(['exit 0', ...result.log]);
+      setLog((prev) => ['exit 0', ...result.log, ...prev]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (msg !== 'Cancelled') setError(msg);
@@ -176,6 +218,9 @@ export function Workbench() {
   function setActiveCmap(cmap: CmapName) {
     setWlayers((prev) => prev.map((w) => (w.layer.id === activeId ? { ...w, cmap } : w)));
   }
+
+  const showTextPanel = activeKind !== null && isTextKind(activeKind);
+  const canvasTabDisabled = activeKind === 'vector';
 
   return (
     <div className="wb">
@@ -197,7 +242,7 @@ export function Workbench() {
           {t('wb.upload')}
           <input type="file" accept=".tif,.tiff" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadFile(f); e.target.value = ''; }} />
         </label>
-        {active && (
+        {active && activeKind === 'raster' && (
           <label className="cmap-pick">
             {t('wb.colormap')}
             <select value={active.cmap} onChange={(e) => setActiveCmap(e.target.value as CmapName)}>
@@ -221,23 +266,57 @@ export function Workbench() {
 
         <div className="wb-center">
           <div className="panel canvas-wrap">
-            <div className="view-toggle">
-              <button type="button" className={viewMode === 'canvas' ? 'vtab on' : 'vtab'} onClick={() => setViewMode('canvas')}>Grid</button>
-              <button type="button" className={viewMode === 'map' ? 'vtab on' : 'vtab'} onClick={() => setViewMode('map')}>Map</button>
-            </div>
-            {viewMode === 'canvas' ? (
-              active ? (
-                <RasterCanvas grid={active.grid} colormap={CMAPS[active.cmap] ?? CMAPS.viridis!} unit={active.unit} decimals={1} title={active.layer.name} />
-              ) : (
-                <div className="map-note">{t('wb.canvasHint')}</div>
-              )
-            ) : (
-              <MapView
-                grid={active?.grid ?? null}
-                colormap={CMAPS[active?.cmap ?? 'viridis'] ?? CMAPS.viridis!}
-                lonLatBbox={active?.lonLatBbox ?? null}
+            {showTextPanel ? (
+              <TextOutputPanel
+                content={active?.textContent ?? ''}
                 title={active?.layer.name}
+                kind={activeKind}
               />
+            ) : (
+              <>
+                <div className="view-toggle">
+                  <button
+                    type="button"
+                    className={viewMode === 'canvas' ? 'vtab on' : 'vtab'}
+                    onClick={() => setViewMode('canvas')}
+                    disabled={canvasTabDisabled}
+                    title={canvasTabDisabled ? t('wb.vectorMapOnly') : undefined}
+                  >
+                    Grid
+                  </button>
+                  <button
+                    type="button"
+                    className={viewMode === 'map' ? 'vtab on' : 'vtab'}
+                    onClick={() => setViewMode('map')}
+                  >
+                    Map
+                  </button>
+                </div>
+                {viewMode === 'canvas' ? (
+                  active?.grid ? (
+                    <RasterCanvas
+                      grid={active.grid}
+                      colormap={CMAPS[active.cmap] ?? CMAPS.viridis!}
+                      unit={active.unit}
+                      decimals={1}
+                      title={active.layer.name}
+                    />
+                  ) : (
+                    <div className="map-note">
+                      {activeKind === 'vector' ? t('wb.vectorMapOnly') : t('wb.canvasHint')}
+                    </div>
+                  )
+                ) : (
+                  <MapView
+                    grid={active?.grid ?? null}
+                    colormap={CMAPS[active?.cmap ?? 'viridis'] ?? CMAPS.viridis!}
+                    lonLatBbox={active?.lonLatBbox ?? null}
+                    geojson={active?.geojson ?? null}
+                    geoBbox={active?.geoBbox ?? null}
+                    title={active?.layer.name}
+                  />
+                )}
+              </>
             )}
           </div>
           <LayersPanel
@@ -261,16 +340,7 @@ export function Workbench() {
                 </span>
               </div>
               <p className="tool-sum">{selectedTool.summary}</p>
-              <ParamForm
-                schema={selectedTool.params}
-                values={params}
-                onChange={(k, v) => {
-                  setParams((p) => ({ ...p, [k]: v }));
-                  if (formErrors[k]) setFormErrors((e) => { const next = { ...e }; delete next[k]; return next; });
-                }}
-                layers={wlayers.map((w) => w.layer)}
-                errors={formErrors}
-              />
+              <ParamForm schema={selectedTool.params} values={params} onChange={(k, v) => setParams((p) => ({ ...p, [k]: v }))} layers={wlayers.map((w) => w.layer)} />
 
               <div className="run-actions">
                 <button type="button" className="btn" onClick={runSelected} disabled={running}>

@@ -242,6 +242,16 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .file-widget { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .file-btn { margin-top: 0 !important; padding: .35rem .7rem; font-size: .85rem; font-weight: 500; }
 
+/* TextOutputPanel */
+.text-out-panel { width: 100%; }
+.text-out-hint { margin: .3rem 0 .5rem; font-size: .82rem; }
+.text-out-pre {
+  margin: 0; padding: .6rem .8rem; overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem;
+  color: var(--fg-subtle); background: var(--surface-2); border-radius: 8px;
+  max-height: 340px; white-space: pre-wrap; word-break: break-word;
+}
+
 /* view toggle (Grid | Map) */
 .view-toggle {
   display: flex; gap: 2px; background: var(--surface-2);
@@ -251,7 +261,8 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
   background: transparent; border: 0; color: var(--fg-subtle);
   font-size: .82rem; font-weight: 600; padding: .2rem .7rem; border-radius: 6px; cursor: pointer;
 }
-.vtab:hover { color: var(--fg); }
+.vtab:hover:not(:disabled) { color: var(--fg); }
+.vtab:disabled { opacity: .4; cursor: not-allowed; }
 .vtab.on { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
 /* MapView */

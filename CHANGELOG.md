@@ -3,6 +3,35 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.08.000] — 2026-06-23
+
+### Added — render non-raster tool outputs
+
+- **Vector output rendering**: when a tool produces a `.geojson` output (`kind: 'vector'`), the bytes are
+  decoded as UTF-8, parsed with `parseGeoJSON()`, and added to the workspace as a vector layer. The Map
+  view renders it as three MapLibre GL layers — fill (Polygon/MultiPolygon), line (LineString + outline),
+  and circle (Point/MultiPoint) — all in the GeoLab accent colour.
+- **Auto-bounds**: `geojsonBbox()` in `lib/geojson.ts` computes `[minLon, minLat, maxLon, maxLat]` from
+  the feature coordinates so `fitBounds()` zooms the map to the result automatically.
+- **Auto-switch to Map**: when the active layer changes to `kind: 'vector'`, the workbench center panel
+  automatically switches from Grid to Map mode; the Grid tab becomes disabled with a tooltip.
+- **Text / table output panel**: tools that produce `text`, `table`, or `pointcloud` outputs have their
+  bytes decoded as UTF-8 and shown in a `TextOutputPanel` (scrollable monospace pre block, max 340 px).
+  The Grid/Map toggle is hidden — neither applies to non-spatial text.
+- **Pointcloud info hint**: when the output is a binary LiDAR file (`kind: 'pointcloud'`), the panel adds
+  a notice explaining the file is binary and directs the user to the tool log for statistics.
+- **Vector feature summary in log**: after a vector run, the log line `vector output: N features (type…)`
+  gives an immediate summary without switching views.
+- **MapView extended**: `MapView` now accepts `geojson: GeoJSONFeatureCollection | null` and `geoBbox`
+  props. Raster and vector overlays share the same map instance (one active at a time); each effect clears
+  the other's source + layers before applying. `GeoJSONSource.setData()` is used for in-place updates
+  (no source removal round-trip on data change).
+- New files: `lib/geojson.ts` (parse + bbox + summary); `components/TextOutputPanel.tsx`.
+- New CSS: `.text-out-panel`, `.text-out-pre`, `.vtab:disabled`.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (1657 modules, 13 s).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+- Merged via **PR #12** → develop.
+
 ## [0.07.000] — 2026-06-23
 
 ### Added — Refined auto-forms

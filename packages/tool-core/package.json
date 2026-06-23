@@ -1,6 +1,6 @@
 {
   "name": "@geolab/tool-core",
-  "version": "0.6.1",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "Engine-agnostic GeoLab abstractions: Tool / Layer / Pipeline / Project + registry + runner + provenance.",
