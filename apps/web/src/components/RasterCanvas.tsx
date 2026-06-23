@@ -11,6 +11,18 @@ interface Props {
   title?: string;
 }
 
+/** A CSS gradient sampling the colormap, for the legend bar. */
+function gradientCss(cmap: (t: number) => RGB): string {
+  const stops: string[] = [];
+  const n = 16;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const [r, g, b] = cmap(t);
+    stops.push(`rgb(${r},${g},${b}) ${((t * 100) | 0)}%`);
+  }
+  return `linear-gradient(to right, ${stops.join(', ')})`;
+}
+
 /** Renders a raster grid to a canvas with a colormap + a value read-out at the cursor (interactivity rubric). */
 export function RasterCanvas({ grid, colormap, unit, decimals = 1, title }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -62,11 +74,19 @@ export function RasterCanvas({ grid, colormap, unit, decimals = 1, title }: Prop
             {unit ? ` ${unit}` : ''}
           </span>
         ) : (
-          <span className="muted">
-            hover to read values · min {grid.min.toFixed(decimals)} · max {grid.max.toFixed(decimals)}
+          <span className="muted">hover to read values</span>
+        )}
+      </div>
+      <div className="colorbar">
+        <div className="cbar" style={{ background: gradientCss(colormap) }} />
+        <div className="cbar-labels">
+          <span>{grid.min.toFixed(decimals)}</span>
+          <span>{((grid.min + grid.max) / 2).toFixed(decimals)}</span>
+          <span>
+            {grid.max.toFixed(decimals)}
             {unit ? ` ${unit}` : ''}
           </span>
-        )}
+        </div>
       </div>
     </div>
   );

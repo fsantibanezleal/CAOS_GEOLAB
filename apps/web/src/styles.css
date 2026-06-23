@@ -156,6 +156,10 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .rgrid { width: 340px; max-width: 80vw; height: auto; image-rendering: pixelated;
   border-radius: 6px; border: 1px solid var(--border); display: block; }
 .rreadout { margin-top: .4rem; font-family: ui-monospace, monospace; font-size: .8rem; }
+.colorbar { margin-top: .5rem; }
+.cbar { height: 12px; border-radius: 6px; border: 1px solid var(--border); }
+.cbar-labels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--fg-subtle);
+  font-family: ui-monospace, monospace; margin-top: .2rem; }
 .log { margin-top: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .6rem .8rem; }
 .log summary { cursor: pointer; font-weight: 600; }
 .log pre { margin: .5rem 0 0; overflow: auto; font-size: .8rem; color: var(--fg-subtle); }
