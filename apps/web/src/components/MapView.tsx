@@ -15,6 +15,22 @@ interface Props {
 const SRC_ID = 'geolab-raster';
 const LYR_ID = 'geolab-raster-layer';
 
+// No-API-key raster basemap (OpenStreetMap) so the overlay has real geographic context. Cross-origin tiles
+// load fine without cross-origin isolation. For heavy public traffic, swap to a keyed provider (MapTiler/Stadia).
+const OSM_STYLE = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+} as maplibregl.StyleSpecification;
+
 /** Render the grid + colormap to an offscreen canvas and return a PNG data URL. */
 function gridToDataUrl(grid: Grid, colormap: (t: number) => RGB): string {
   const cv = document.createElement('canvas');
@@ -70,7 +86,7 @@ export function MapView({ grid, colormap, lonLatBbox, title, opacity = 0.85 }: P
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://demotiles.maplibre.org/style.json',
+      style: OSM_STYLE,
       center: [0, 20],
       zoom: 1,
       attributionControl: { compact: true },

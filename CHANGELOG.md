@@ -3,6 +3,21 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.06.001] — 2026-06-23
+
+### Fixed
+- **MapLibre basemap now renders.** v0.06.000 added a `coi-serviceworker` (COEP `require-corp`) that
+  cross-origin-isolated the page and **blocked the cross-origin basemap tiles** — and nothing in GeoLab
+  needs cross-origin isolation (the geolibre WASI engine is single-threaded; it ran fine without COI in
+  v0.02–v0.04). Removed the COI serviceworker and switched the basemap to an **OSM raster** style.
+  Screenshot-verified (headless): OSM tiles load (HTTP 200), `crossOriginIsolated=false`, the georeferenced
+  overlay sits correctly on the world map, 0 console errors.
+
+### Added (infra)
+- **GitHub Pages deploy workflow** (`.github/workflows/deploy-pages.yml`, on push to `main`) + `public/CNAME`
+  (`geolab.fasl-work.com`). Inert until the repo is made public + Pages is enabled (go-live runbook in
+  CAOS_MANAGE `deployments/geolab.md`).
+
 ## [0.06.000] — 2026-06-23
 
 ### Added — MapLibre basemap + COI serviceworker
