@@ -325,6 +325,61 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 :root[data-theme='dark'] .react-flow__minimap { background: var(--surface); }
 :root[data-theme='dark'] .react-flow__controls-button { background: var(--surface); border-color: var(--border); color: var(--fg); }
 
+/* Architecture modal (ADR-0058) */
+.arch-modal {
+  position: relative; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; max-width: 860px; width: 100%; padding: 1.4rem;
+  max-height: 90vh; overflow-y: auto;
+}
+.arch-tabs {
+  display: flex; gap: .3rem; margin-bottom: 1rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); padding-bottom: .6rem;
+}
+.arch-tab {
+  background: transparent; border: 1px solid transparent; border-radius: 8px;
+  color: var(--fg-subtle); cursor: pointer; font-size: .88rem; padding: .3rem .75rem;
+}
+.arch-tab:hover { background: var(--surface-2); color: var(--fg); }
+.arch-tab.on {
+  background: var(--accent-soft); color: var(--fg); border-color: var(--border);
+  font-weight: 600;
+}
+.arch-body { display: flex; flex-direction: column; gap: .8rem; }
+.arch-desc { margin: 0 0 .8rem; color: var(--fg-subtle); font-size: .9rem; line-height: 1.6; }
+/* Engine grid */
+.arch-engine-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: .8rem;
+}
+@media (max-width: 600px) { .arch-engine-grid { grid-template-columns: 1fr; } }
+.arch-engine-card {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: .7rem .9rem; display: flex; flex-direction: column; gap: .25rem;
+}
+.arch-engine-card--wired { border-color: color-mix(in srgb, var(--good) 40%, var(--border)); }
+.arch-engine-name { font-weight: 700; font-size: .95rem; color: var(--accent); }
+.arch-engine-project { font-size: .82rem; color: var(--fg-subtle); }
+.arch-engine-meta { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .2rem; }
+.arch-engine-tools { font-size: .82rem; color: var(--fg-subtle); margin-top: .15rem; }
+.arch-planned-label { font-size: .85rem; color: var(--fg-subtle); font-weight: 600; margin-bottom: .35rem; }
+.arch-engine-planned-list { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .5rem; }
+.arch-engine-planned-chip {
+  font-size: .82rem; padding: .15rem .55rem; border-radius: 999px;
+  border: 1px dashed var(--border); color: var(--fg-subtle); background: var(--surface-2);
+}
+.arch-planned-tools { font-size: .75rem; color: var(--fg-subtle); }
+/* Data flow detail */
+.arch-flow-detail { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
+.arch-flow-row { display: flex; gap: .6rem; font-size: .83rem; }
+.arch-flow-key { color: var(--fg); font-weight: 600; min-width: 200px; flex-shrink: 0; }
+.arch-flow-val { color: var(--fg-subtle); font-family: ui-monospace, monospace; font-size: .8rem; }
+@media (max-width: 600px) { .arch-flow-row { flex-direction: column; } .arch-flow-key { min-width: unset; } }
+/* Privacy note */
+.arch-privacy-note {
+  margin-top: .8rem; padding: .65rem 1rem; background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 9px; font-size: .88rem; line-height: 1.6;
+}
+
 /* MapView */
 .mapview { display: flex; flex-direction: column; width: 100%; }
 .mapview .rtitle { font-weight: 600; margin-bottom: .4rem; }

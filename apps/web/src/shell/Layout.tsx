@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Briefcase, Github, Globe, Info, Languages, Layers, Moon, Sun, X } from 'lucide-react';
+import { Briefcase, Github, Globe, Info, Languages, Layers, Moon, Sun } from 'lucide-react';
 import { ROUTES } from '../lib/routes';
 import { EXTERNAL_LINKS } from '../lib/links';
 import { useTheme } from '../store/theme';
+import { ArchModal } from '../components/ArchModal';
 
 export function Layout() {
   const { t, i18n } = useTranslation();
@@ -54,19 +55,10 @@ export function Layout() {
           <a href={EXTERNAL_LINKS.personal} target="_blank" rel="noreferrer">Personal</a>
           <a href={EXTERNAL_LINKS.portfolio} target="_blank" rel="noreferrer">Portfolio</a>
         </span>
-        <span>{t('footer.license')} · v0.12.000</span>
+        <span>{t('footer.license')} · v0.13.000</span>
       </footer>
 
-      {arch && (
-        <div className="modal-wrap" role="dialog" aria-modal="true" onClick={() => setArch(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="modal-x" onClick={() => setArch(false)} aria-label="Close"><X size={18} /></button>
-            <h2>GeoLab — {t('arch.open')}</h2>
-            <p>{t('scaffold.body')}</p>
-            <p className="muted">The full themed-SVG architecture modal (ADR-0058: web / offline / compute lanes, the science, the data contracts) lands with the live engine wiring.</p>
-          </div>
-        </div>
-      )}
+      {arch && <ArchModal onClose={() => setArch(false)} />}
     </>
   );
 }

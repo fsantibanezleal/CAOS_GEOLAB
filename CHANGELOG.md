@@ -3,6 +3,37 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.13.000] — 2026-06-23
+
+### Added — ⓘ Architecture modal (ADR-0058: 4-tab themed SVG explainer)
+
+- **`ArchModal` component** (`apps/web/src/components/ArchModal.tsx`) — replaces the scaffold
+  placeholder in the header ⓘ button with a full 4-tab architecture explainer (ADR-0058).
+- **Tab 1 — Architecture**: SVG diagram of the full platform stack inside a browser boundary:
+  Workbench + Pipeline Editor → Tool Registry → geolibre (WASM/Worker) · Turf.js (JS) ·
+  H3 (JS) · planned engines (GDAL · GEOS · mapshaper · libvips · ITK-Wasm); Your Files box
+  showing data flow without upload.
+- **Tab 2 — Engines**: visual card grid for the 3 wired engines (geolibre · Turf.js · H3)
+  with name, upstream project, license chip, active status chip, and tool count; planned-engines
+  pill list; adapter-interface SVG showing how Tool Registry fans out to each adapter.
+- **Tab 3 — Data Flow**: 6-step horizontal flow diagram (Your file → Virtual FS → Adapter →
+  Engine → Output → New layer) with step icons; technical detail rows for WASM vs JS paths and
+  raster vs vector render paths.
+- **Tab 4 — Privacy**: SVG diagram with browser boundary containing data (in memory) + engines +
+  output layers; "No server" zone (dashed red box) showing what is NOT sent; explicit list of
+  what IS sent (npm CDN for WASM on first load; map tile requests with view coords only; no
+  analytics, no cookies). Privacy guarantee callout.
+- All diagrams use CSS custom properties (`var(--fg)`, `var(--accent)`, `var(--border)`, etc.)
+  via SVG `style` attributes — full light/dark theme support with zero JS overhead.
+- **Bilingual (EN/ES)**: all tab labels, descriptions, and SVG text respect the UI language.
+- **CSS additions** (`.arch-modal`, `.arch-tabs`, `.arch-tab`, `.arch-body`, `.arch-desc`,
+  `.arch-engine-grid`, `.arch-engine-card`, `.arch-planned-*`, `.arch-flow-*`, `.arch-privacy-note`).
+- `Layout.tsx`: import `ArchModal`; inline placeholder block replaced with `<ArchModal onClose=…/>`;
+  unused `X` icon import removed; footer → `v0.13.000`.
+- All packages bumped to 0.13.0.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (2111 modules, 21.7 s).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.12.000] — 2026-06-23
 
 ### Added — H3 adapter (third engine, 8 hexagonal-grid tools)

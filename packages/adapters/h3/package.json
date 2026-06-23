@@ -1,6 +1,6 @@
 {
   "name": "@geolab/adapter-h3",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "description": "Adapter mapping Uber H3 hexagonal-grid functions into GeoLab Tool objects.",
