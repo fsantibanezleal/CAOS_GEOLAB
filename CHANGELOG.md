@@ -3,6 +3,27 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.11.000] — 2026-06-23
+
+### Added — Turf.js adapter (second engine)
+
+- **`@geolab/adapter-turf`** (`packages/adapters/turf/`) — new workspace package wrapping 16 Turf.js
+  v7 vector-analysis functions as GeoLab `Tool` objects. Runs entirely on the **main thread** (no
+  WASM, no Web Worker): pure-JS, zero startup delay.
+- **16 tools registered** across three categories:
+  - *Measurement*: `turf:area`, `turf:length` → text output (m², km)
+  - *Geometry constructors / extractions*: `turf:centroid`, `turf:center`, `turf:envelope`,
+    `turf:convex`, `turf:point-on-feature`, `turf:explode`, `turf:flatten`
+  - *Transformations*: `turf:buffer`, `turf:simplify`, `turf:dissolve`, `turf:transform-rotate`,
+    `turf:transform-scale`, `turf:transform-translate`
+  - *Set operations*: `turf:union`, `turf:intersect`, `turf:difference` (two-layer)
+- **Multi-engine execution model** in Workbench and Pipeline: branch on engine type — geolibre WASM
+  tools continue to run via the existing Web Worker path; Turf tools execute with `tool.run(ctx,
+  params)` directly on the main thread. Engine chips in the UI show "Turf.js" for turf tools.
+- **`apps/web/src/engines/turf.ts`**: lazy singleton that builds Turf tools once on first use.
+- **`apps/web/src/lib/engines.ts`**: geolibre and turf status both updated to `'wired'`.
+- Engines panel in the Toolbox now shows both geolibre and turf as active engines.
+
 ## [0.10.000] — 2026-06-23
 
 ### Added — Pipeline node editor (React Flow)

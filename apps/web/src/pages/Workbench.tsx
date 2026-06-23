@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { InMemoryFS, type Layer, type ParamSchema, type PortKind, type Tool } from '@geolab/tool-core';
+import { InMemoryFS, type Layer, type ParamSchema, type PortKind, type Tool, type ToolRunContext } from '@geolab/tool-core';
 import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
+import { loadTurfTools } from '../engines/turf';
 import { readCogGrid, readCogBoundsLonLat } from '../engines/geolibre-io';
 import { writeSyntheticDem } from '../lib/dem';
 import type { Grid } from '../lib/grid';
@@ -55,8 +56,11 @@ export function Workbench() {
   const { t } = useTranslation();
   const fsRef = useRef(new InMemoryFS());
   const idRef = useRef(0);
-  const { state: workerState, progress, run: runInWorker, cancel } = useWorkerRunner();
-  const running = workerState === 'running';
+  const { state: workerState, progress: workerProgress, run: runInWorker, cancel } = useWorkerRunner();
+  const [localRunning, setLocalRunning] = useState(false);
+  const [localProgress, setLocalProgress] = useState({ fraction: 0, message: '' });
+  const running = workerState === 'running' || localRunning;
+  const progress = workerState === 'running' ? workerProgress : localProgress;
 
   const [tools, setTools] = useState<Tool[]>([]);
   const [engineLoading, setEngineLoading] = useState(false);
@@ -93,13 +97,15 @@ export function Workbench() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
-  async function ensureEngine() {
+  async function ensureEngines() {
     if (tools.length) return tools;
     setEngineLoading(true);
     try {
-      const loaded = await loadGeolibreTools();
-      setTools(loaded);
-      return loaded;
+      // Turf loads synchronously (pure JS); geolibre loads the WASM asynchronously.
+      const [geolibreTools] = await Promise.all([loadGeolibreTools()]);
+      const allTools = [...loadTurfTools(), ...geolibreTools];
+      setTools(allTools);
+      return allTools;
     } finally {
       setEngineLoading(false);
     }
@@ -119,7 +125,7 @@ export function Workbench() {
       fsRef.current.set(ref, bytes);
       const lonLatBbox = await readCogBoundsLonLat(bytes) ?? undefined;
       addLayer({ layer: { id, name: 'Synthetic DEM (30 m, UTM 19S)', kind: 'raster', crs: 'EPSG:32719', format: 'GTiff', bytesRef: ref }, grid, unit: 'm', cmap: 'terrain', lonLatBbox });
-      await ensureEngine();
+      await ensureEngines();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -134,7 +140,7 @@ export function Workbench() {
       const ref = `data/${id}.tif`;
       fsRef.current.set(ref, bytes);
       addLayer({ layer: { id, name: file.name, kind: 'raster', format: 'GeoTIFF', bytesRef: ref }, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined });
-      await ensureEngine();
+      await ensureEngines();
     } catch (e) {
       setError(`${file.name}: ${e instanceof Error ? e.message : String(e)} — is it a single-band GeoTIFF raster?`);
     }
@@ -157,7 +163,7 @@ export function Workbench() {
         geoBbox,
       });
       setLog([`Loaded: ${count} features (${types.join(', ')})`]);
-      await ensureEngine();
+      await ensureEngines();
     } catch (e) {
       setError(`${file.name}: ${e instanceof Error ? e.message : String(e)} — is it a valid GeoJSON file?`);
     }
@@ -180,92 +186,99 @@ export function Workbench() {
     setLog([]);
   }
 
+  /** Process tool outputs (shared between worker + main-thread paths). */
+  async function applyToolOutputs(result: { outputs: { name: string; kind: PortKind; bytes: Uint8Array; format?: string }[]; log: string[] }, tool: Tool) {
+    let firstOut: string | null = null;
+    for (const out of result.outputs) {
+      const id = `${tool.id.replace(/[^a-z0-9]+/gi, '_')}-${++idRef.current}`;
+
+      if (out.kind === 'raster') {
+        const ref = `data/${id}.tif`;
+        await fsRef.current.write(ref, out.bytes);
+        const [grid, lonLatBbox] = await Promise.all([readCogGrid(out.bytes), readCogBoundsLonLat(out.bytes)]);
+        const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: 'raster', format: out.format, bytesRef: ref, producedBy: [tool.provenance] };
+        setWlayers((prev) => [{ layer, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined }, ...prev]);
+        if (!firstOut) firstOut = id;
+
+      } else if (out.kind === 'vector') {
+        const ref = `data/${id}.geojson`;
+        await fsRef.current.write(ref, out.bytes);
+        let geojson: GeoJSONFeatureCollection | undefined;
+        let geoBbox: [number, number, number, number] | undefined;
+        try {
+          geojson = parseGeoJSON(out.bytes);
+          const bbox = geojsonBbox(geojson);
+          if (bbox) geoBbox = bbox;
+          const { count, types } = geojsonSummary(geojson);
+          setLog((prev) => [`vector output: ${count} features (${types.join(', ')})`, ...prev]);
+        } catch {
+          setLog((prev) => [`vector output "${out.name}" — could not parse as GeoJSON`, ...prev]);
+        }
+        const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: 'vector', format: 'GeoJSON', bytesRef: ref, producedBy: [tool.provenance] };
+        setWlayers((prev) => [{ layer, cmap: 'viridis', geojson, geoBbox }, ...prev]);
+        if (!firstOut) firstOut = id;
+
+      } else {
+        const ref = `data/${id}.txt`;
+        await fsRef.current.write(ref, out.bytes);
+        let textContent = '';
+        try { textContent = new TextDecoder().decode(out.bytes); } catch { textContent = `(binary ${out.kind} output — ${out.bytes.length} bytes)`; }
+        const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: out.kind, format: out.format, bytesRef: ref, producedBy: [tool.provenance] };
+        setWlayers((prev) => [{ layer, cmap: 'viridis', textContent }, ...prev]);
+        if (!firstOut) firstOut = id;
+      }
+    }
+    if (firstOut) setActiveId(firstOut);
+    setLog((prev) => ['exit 0', ...result.log, ...prev]);
+  }
+
   async function runSelected() {
     if (!selectedTool || running) return;
     setError(null);
     setLog([]);
 
+    // ── Branch: geolibre tools use the WASM Web Worker; all others run main-thread ──
     const manifest = getGeolibreManifest(selectedTool.id);
-    if (!manifest) {
-      setError(`No geolibre manifest found for "${selectedTool.id}" — main-thread fallback not implemented yet.`);
-      return;
-    }
 
-    try {
-      const result = await runInWorker(manifest, params, wlayers.map((w) => w.layer), fsRef.current);
-
-      let firstOut: string | null = null;
-      for (const out of result.outputs) {
-        const id = `${selectedTool.id.replace(/[^a-z0-9]+/gi, '_')}-${++idRef.current}`;
-
-        if (out.kind === 'raster') {
-          const ref = `data/${id}.tif`;
-          await fsRef.current.write(ref, out.bytes);
-          const [grid, lonLatBbox] = await Promise.all([readCogGrid(out.bytes), readCogBoundsLonLat(out.bytes)]);
-          const layer: Layer = {
-            id,
-            name: `${selectedTool.name} · ${out.name}`,
-            kind: 'raster',
-            format: out.format,
-            bytesRef: ref,
-            producedBy: [selectedTool.provenance],
-          };
-          setWlayers((prev) => [{ layer, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined }, ...prev]);
-          if (!firstOut) firstOut = id;
-
-        } else if (out.kind === 'vector') {
-          const ref = `data/${id}.geojson`;
-          await fsRef.current.write(ref, out.bytes);
-          let geojson: GeoJSONFeatureCollection | undefined;
-          let geoBbox: [number, number, number, number] | undefined;
-          try {
-            geojson = parseGeoJSON(out.bytes);
-            const bbox = geojsonBbox(geojson);
-            if (bbox) geoBbox = bbox;
-            const { count, types } = geojsonSummary(geojson);
-            setLog((prev) => [`vector output: ${count} features (${types.join(', ')})`, ...prev]);
-          } catch {
-            setLog((prev) => [`vector output "${out.name}" — could not parse as GeoJSON`, ...prev]);
-          }
-          const layer: Layer = {
-            id,
-            name: `${selectedTool.name} · ${out.name}`,
-            kind: 'vector',
-            format: 'GeoJSON',
-            bytesRef: ref,
-            producedBy: [selectedTool.provenance],
-          };
-          setWlayers((prev) => [{ layer, cmap: 'viridis', geojson, geoBbox }, ...prev]);
-          if (!firstOut) firstOut = id;
-
-        } else {
-          // text / table / pointcloud — decode as UTF-8 text
-          const ref = `data/${id}.txt`;
-          await fsRef.current.write(ref, out.bytes);
-          let textContent = '';
-          try {
-            textContent = new TextDecoder().decode(out.bytes);
-          } catch {
-            textContent = `(binary ${out.kind} output — ${out.bytes.length} bytes)`;
-          }
-          const layer: Layer = {
-            id,
-            name: `${selectedTool.name} · ${out.name}`,
-            kind: out.kind,
-            format: out.format,
-            bytesRef: ref,
-            producedBy: [selectedTool.provenance],
-          };
-          setWlayers((prev) => [{ layer, cmap: 'viridis', textContent }, ...prev]);
-          if (!firstOut) firstOut = id;
-        }
+    if (manifest) {
+      // ── geolibre path: run in WASM Web Worker ─────────────────────
+      try {
+        const result = await runInWorker(manifest, params, wlayers.map((w) => w.layer), fsRef.current);
+        await applyToolOutputs(result, selectedTool);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg !== 'Cancelled') setError(msg);
       }
-
-      if (firstOut) setActiveId(firstOut);
-      setLog((prev) => ['exit 0', ...result.log, ...prev]);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg !== 'Cancelled') setError(msg);
+    } else {
+      // ── main-thread path: Turf.js and future pure-JS engines ──────
+      setLocalRunning(true);
+      setLocalProgress({ fraction: 0.1, message: `running ${selectedTool.id}…` });
+      const ac = new AbortController();
+      const ctx: ToolRunContext = {
+        fs: fsRef.current,
+        layer: (id: string) => wlayers.find((w) => w.layer.id === id)?.layer,
+        signal: ac.signal,
+        onProgress: (fraction, message) => setLocalProgress({ fraction, message: message ?? '' }),
+      };
+      try {
+        const result = await selectedTool.run(ctx, params);
+        // Normalise ToolRunResult outputs to WorkerOutputFile shape for applyToolOutputs
+        const normalised = {
+          outputs: await Promise.all(result.outputs.map(async (o) => ({
+            name: o.name,
+            kind: o.kind,
+            bytes: o.bytesRef ? await fsRef.current.read(o.bytesRef) : new Uint8Array(),
+            format: o.format,
+          }))),
+          log: result.log ?? [],
+        };
+        await applyToolOutputs(normalised, selectedTool);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLocalRunning(false);
+        setLocalProgress({ fraction: 0, message: '' });
+      }
     }
   }
 
@@ -390,7 +403,8 @@ export function Workbench() {
               <div className="step-h">
                 {selectedTool.name} <span className="mono">{selectedTool.id}</span>
                 <span className={`chip tier-${selectedTool.provenance.license.tier}`}>
-                  {selectedTool.provenance.upstreamProject.includes('Whitebox') ? 'WhiteboxTools' : 'GeoLibre'} · {selectedTool.provenance.license.spdx}
+                  {selectedTool.provenance.engine === 'turf' ? 'Turf.js' :
+                   selectedTool.provenance.upstreamProject.includes('Whitebox') ? 'WhiteboxTools' : 'GeoLibre'} · {selectedTool.provenance.license.spdx}
                 </span>
               </div>
               <p className="tool-sum">{selectedTool.summary}</p>

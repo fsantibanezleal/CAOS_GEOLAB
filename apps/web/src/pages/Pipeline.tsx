@@ -24,8 +24,9 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useTranslation } from 'react-i18next';
 import { Download, Play, StopCircle, Upload, X } from 'lucide-react';
-import { InMemoryFS, topologicalOrder, type Layer, type Tool } from '@geolab/tool-core';
+import { InMemoryFS, topologicalOrder, type Layer, type Tool, type ToolRunContext } from '@geolab/tool-core';
 import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
+import { loadTurfTools } from '../engines/turf';
 import { collectRunArgs, guessOutputKind } from '@geolab/adapter-geolibre';
 import type { WorkerRunResult } from '../lib/useWorkerRunner';
 
@@ -158,12 +159,12 @@ export function Pipeline() {
     ? tools.find((t) => t.id === (selectedNode.data as ToolNodeData).toolId) ?? null
     : null;
 
-  // Load engine on mount
+  // Load all engines on mount
   useEffect(() => {
     if (tools.length) return;
     setEngineLoading(true);
     loadGeolibreTools()
-      .then(setTools)
+      .then((geolibreTools) => setTools([...loadTurfTools(), ...geolibreTools]))
       .finally(() => setEngineLoading(false));
   }, [tools.length]);
 
@@ -254,13 +255,6 @@ export function Pipeline() {
       if (!pNode) continue;
       const tool = tools.find((t) => t.id === pNode.toolId);
       if (!tool) continue;
-      const manifest = getGeolibreManifest(tool.id);
-      if (!manifest) {
-        setPipelineLog((prev) => [...prev, { nodeId, toolName: tool.name, lines: ['No manifest — skipped'], ok: false }]);
-        updateNodeStatus(nodeId, 'error');
-        continue;
-      }
-
       updateNodeStatus(nodeId, 'running');
 
       // Wire upstream output as input bytes for this node (first upstream edge wins)
@@ -269,30 +263,48 @@ export function Pipeline() {
       if (upEdge) {
         const upBytes = nodeOutputs.get(upEdge.source);
         if (upBytes) {
-          const ref = `pipe-${upEdge.source}.tif`;
+          const upKind = upBytes.length > 4 && upBytes[0] === 0x47 ? 'vector' : 'raster';
+          const ext = upKind === 'vector' ? 'geojson' : 'tif';
+          const ref = `pipe-${upEdge.source}.${ext}`;
           await fsRef.current.write(ref, upBytes);
-          layers.push({ id: upEdge.source, name: 'upstream', kind: 'raster', bytesRef: ref });
+          layers.push({ id: upEdge.source, name: 'upstream', kind: upKind, bytesRef: ref });
         }
       }
 
       const params = nodeParams[nodeId] ?? {};
-      const getLayer = (id: string) => layers.find((l) => l.id === id);
+      const manifest = getGeolibreManifest(tool.id);
 
       try {
-        const { args, input } = await collectRunArgs(manifest, params, getLayer, (ref) => fsRef.current.read(ref).catch(() => new Uint8Array()));
-        const result = await runWorkerTool(tool.id, args, input);
-
-        // Store first raster/vector output for downstream chaining
-        const firstOut = result.outputs[0];
-        if (firstOut) {
-          nodeOutputs.set(nodeId, firstOut.bytes);
-          // Also materialise in FS
-          const outRef = `pipe-out-${nodeId}.${firstOut.kind === 'raster' ? 'tif' : 'dat'}`;
-          await fsRef.current.write(outRef, firstOut.bytes);
+        if (manifest) {
+          // ── geolibre WASM worker path ──
+          const getLayer = (id: string) => layers.find((l) => l.id === id);
+          const { args, input } = await collectRunArgs(manifest, params, getLayer, (ref) => fsRef.current.read(ref).catch(() => new Uint8Array()));
+          const result = await runWorkerTool(tool.id, args, input);
+          const firstOut = result.outputs[0];
+          if (firstOut) {
+            nodeOutputs.set(nodeId, firstOut.bytes);
+            const outRef = `pipe-out-${nodeId}.${firstOut.kind === 'raster' ? 'tif' : 'geojson'}`;
+            await fsRef.current.write(outRef, firstOut.bytes);
+          }
+          updateNodeStatus(nodeId, 'done');
+          setPipelineLog((prev) => [...prev, { nodeId, toolName: tool.name, lines: result.log, ok: true }]);
+        } else {
+          // ── main-thread path (Turf.js + future JS engines) ──
+          const ctx: ToolRunContext = {
+            fs: fsRef.current,
+            layer: (id: string) => layers.find((l) => l.id === id),
+            signal: new AbortController().signal,
+            onProgress: () => undefined,
+          };
+          const result = await tool.run(ctx, params);
+          const firstOut = result.outputs[0];
+          if (firstOut?.bytesRef) {
+            const bytes = await fsRef.current.read(firstOut.bytesRef);
+            nodeOutputs.set(nodeId, bytes);
+          }
+          updateNodeStatus(nodeId, 'done');
+          setPipelineLog((prev) => [...prev, { nodeId, toolName: tool.name, lines: result.log ?? [], ok: true }]);
         }
-
-        updateNodeStatus(nodeId, 'done');
-        setPipelineLog((prev) => [...prev, { nodeId, toolName: tool.name, lines: result.log, ok: true }]);
       } catch (e) {
         updateNodeStatus(nodeId, 'error');
         setPipelineLog((prev) => [...prev, { nodeId, toolName: tool.name, lines: [String(e)], ok: false }]);
