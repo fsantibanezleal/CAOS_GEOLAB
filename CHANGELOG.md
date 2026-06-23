@@ -3,6 +3,29 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.12.000] — 2026-06-23
+
+### Added — H3 adapter (third engine, 8 hexagonal-grid tools)
+
+- **`@geolab/adapter-h3`** (`packages/adapters/h3/`) — new workspace package wrapping 8 Uber H3
+  (h3-js v4) hexagonal-grid functions as GeoLab `Tool` objects. Runs entirely on the **main thread**
+  (pure-JS, no WASM, no Web Worker): zero startup delay.
+- **8 tools registered** across two categories:
+  - *Vector GIS*: `h3:point-to-cell` (point → H3 cell polygon), `h3:polyfill` (polygon → H3 cell
+    fill at resolution), `h3:k-ring` (point → grid disk neighbourhood), `h3:compact` (compact
+    mixed-resolution cells), `h3:uncompact` (expand to uniform resolution), `h3:grid-path` (shortest
+    H3 path between two points)
+  - *Spatial statistics*: `h3:great-circle-distance` (geodesic distance between two points),
+    `h3:cell-info` (H3 cell ID / area / parent text report)
+- **H3 cell chaining**: polyfill / k-ring / grid-path outputs carry `properties.h3index` on each
+  feature so `h3:compact` and `h3:uncompact` can read them as layer inputs.
+- **`apps/web/src/engines/h3.ts`**: lazy singleton that builds H3 tools once on first use.
+- **`apps/web/src/lib/engines.ts`**: H3 status updated to `'wired'`; approxTools corrected to 8.
+- Workbench + Pipeline updated: `loadH3Tools()` merged into the all-tools list alongside Turf and
+  geolibre. Engine chip shows "H3 (Uber)" for h3 tools.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green.
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.11.000] — 2026-06-23
 
 ### Added — Turf.js adapter (second engine)

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { InMemoryFS, type Layer, type ParamSchema, type PortKind, type Tool, type ToolRunContext } from '@geolab/tool-core';
 import { loadGeolibreTools, getGeolibreManifest } from '../engines/geolibre';
 import { loadTurfTools } from '../engines/turf';
+import { loadH3Tools } from '../engines/h3';
 import { readCogGrid, readCogBoundsLonLat } from '../engines/geolibre-io';
 import { writeSyntheticDem } from '../lib/dem';
 import type { Grid } from '../lib/grid';
@@ -101,9 +102,9 @@ export function Workbench() {
     if (tools.length) return tools;
     setEngineLoading(true);
     try {
-      // Turf loads synchronously (pure JS); geolibre loads the WASM asynchronously.
+      // Turf + H3 load synchronously (pure JS); geolibre loads the WASM asynchronously.
       const [geolibreTools] = await Promise.all([loadGeolibreTools()]);
-      const allTools = [...loadTurfTools(), ...geolibreTools];
+      const allTools = [...loadTurfTools(), ...loadH3Tools(), ...geolibreTools];
       setTools(allTools);
       return allTools;
     } finally {
@@ -404,6 +405,7 @@ export function Workbench() {
                 {selectedTool.name} <span className="mono">{selectedTool.id}</span>
                 <span className={`chip tier-${selectedTool.provenance.license.tier}`}>
                   {selectedTool.provenance.engine === 'turf' ? 'Turf.js' :
+                   selectedTool.provenance.engine === 'h3' ? 'H3 (Uber)' :
                    selectedTool.provenance.upstreamProject.includes('Whitebox') ? 'WhiteboxTools' : 'GeoLibre'} · {selectedTool.provenance.license.spdx}
                 </span>
               </div>

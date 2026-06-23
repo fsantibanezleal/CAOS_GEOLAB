@@ -1,6 +1,6 @@
 {
   "name": "@geolab/web",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@geolab/adapter-geolibre": "workspace:*",
+    "@geolab/adapter-h3": "workspace:*",
     "@geolab/adapter-turf": "workspace:*",
     "@geolab/geolab-tools": "workspace:*",
     "@geolab/tool-core": "workspace:*",
