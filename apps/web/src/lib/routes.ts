@@ -7,5 +7,6 @@ export interface AppRoute {
 
 export const ROUTES: AppRoute[] = [
   { path: '/', labelKey: 'nav.workbench' },
+  { path: '/tools', labelKey: 'nav.tools' },
   { path: '/credits', labelKey: 'nav.credits' },
 ];

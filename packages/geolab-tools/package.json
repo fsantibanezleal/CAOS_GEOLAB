@@ -1,6 +1,6 @@
 {
   "name": "@geolab/geolab-tools",
-  "version": "0.1.0",
+  "version": "0.6.1",
   "private": true,
   "type": "module",
   "description": "GeoLab's OWN tools: composite workflows, cross-engine comparison, domain analyses, trained ONNX.",
