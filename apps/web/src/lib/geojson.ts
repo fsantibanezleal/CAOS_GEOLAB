@@ -72,6 +72,16 @@ export interface GeoJSONSummary {
 /** Summarise a FeatureCollection for the inspector UI. */
 export function geojsonSummary(fc: GeoJSONFeatureCollection): GeoJSONSummary {
   const types = [...new Set(fc.features.map((f) => f.geometry?.type ?? 'Unknown'))];
-  const propKeys = [...new Set(fc.features.flatMap((f) => Object.keys(f.properties ?? {})))].slice(0, 10);
+  const propKeys = [...new Set(fc.features.flatMap((f) => Object.keys(f.properties ?? {})))].slice(0, 30);
   return { count: fc.features.length, types, propKeys };
+}
+
+/** Attribute fields of a FeatureCollection + whether each is numeric (for the field selector). */
+export function geojsonFields(fc: GeoJSONFeatureCollection): { name: string; numeric: boolean }[] {
+  const keys = [...new Set(fc.features.flatMap((f) => Object.keys(f.properties ?? {})))].slice(0, 30);
+  return keys.map((name) => {
+    const vals = fc.features.map((f) => f.properties?.[name]).filter((v) => v !== undefined && v !== null);
+    const numeric = vals.length > 0 && vals.every((v) => typeof v === 'number' && Number.isFinite(v));
+    return { name, numeric };
+  });
 }
