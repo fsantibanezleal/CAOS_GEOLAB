@@ -17,6 +17,7 @@ import { ParamForm } from '../components/ParamForm';
 import { Toolbox } from '../components/Toolbox';
 import { LayersPanel } from '../components/LayersPanel';
 import { useWorkerRunner } from '../lib/useWorkerRunner';
+import { SAMPLES, SAMPLE_GROUPS, DEMO_WORKSPACE, type SampleDef } from '../lib/samples/registry';
 
 interface WLayer {
   layer: Layer;
@@ -129,6 +130,41 @@ export function Workbench() {
       await ensureEngines();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  /** D3: add a synthetic sample (raster / vector / lidar / table) as a workspace layer. */
+  async function addSampleLayer(def: SampleDef) {
+    setError(null);
+    try {
+      const res = await def.generate();
+      const id = `${def.id}-${++idRef.current}`;
+      const ref = `data/${id}.${res.ext}`;
+      fsRef.current.set(ref, res.bytes);
+      const layer: Layer = { id, name: `${def.name} (synthetic)`, kind: res.kind, format: res.ext, bytesRef: ref };
+      const wl: WLayer = { layer, cmap: res.cmap ?? 'viridis', unit: res.unit };
+      if (res.kind === 'raster' && res.grid) {
+        wl.grid = res.grid;
+        wl.lonLatBbox = (await readCogBoundsLonLat(res.bytes)) ?? undefined;
+      } else if (res.kind === 'vector' && res.geojson) {
+        wl.geojson = res.geojson;
+        wl.geoBbox = geojsonBbox(res.geojson) ?? undefined;
+      } else if (res.kind === 'table') {
+        wl.textContent = new TextDecoder().decode(res.bytes);
+      } else if (res.kind === 'pointcloud') {
+        wl.textContent = `Binary LiDAR (LAS) — ${res.bytes.length} bytes. Run "lidar_info" or an interpolation tool to inspect it.`;
+      }
+      addLayer(wl);
+      await ensureEngines();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function loadDemoWorkspace() {
+    for (const sid of DEMO_WORKSPACE) {
+      const def = SAMPLES.find((s) => s.id === sid);
+      if (def) await addSampleLayer(def);
     }
   }
 
@@ -330,6 +366,27 @@ export function Workbench() {
       <div className="wb-toolbar">
         <button type="button" className="btn" onClick={generateDem} disabled={running}>
           {t('wb.gen')}
+        </button>
+        <select
+          className="sample-pick"
+          value=""
+          disabled={running}
+          onChange={(e) => {
+            const def = SAMPLES.find((s) => s.id === e.target.value);
+            if (def) void addSampleLayer(def);
+          }}
+        >
+          <option value="">+ {t('wb.addSample')}</option>
+          {SAMPLE_GROUPS.map((g) => (
+            <optgroup key={g} label={g}>
+              {SAMPLES.filter((s) => s.group === g).map((s) => (
+                <option key={s.id} value={s.id} title={s.summary}>{s.name}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <button type="button" className="btn btn-ghost" onClick={() => void loadDemoWorkspace()} disabled={running}>
+          {t('wb.demo')}
         </button>
         <label className="btn btn-ghost">
           {t('wb.upload')}

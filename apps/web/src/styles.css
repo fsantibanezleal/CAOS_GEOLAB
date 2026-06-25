@@ -170,6 +170,7 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .btn-ghost:hover { background: var(--surface-2); }
 .cmap-pick { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--fg-subtle); }
 .cmap-pick select { padding: .35rem .5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); }
+.sample-pick { padding: .5rem .6rem; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--fg); cursor: pointer; font-weight: 600; }
 .wb-cols { display: grid; grid-template-columns: 250px 1fr 320px; gap: 1rem; align-items: start; }
 @media (max-width: 1080px) { .wb-cols { grid-template-columns: 1fr; } }
 .panel h3 { font-size: 1rem; margin: 0 0 .5rem; }
