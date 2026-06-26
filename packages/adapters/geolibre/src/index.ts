@@ -51,11 +51,13 @@ export interface GeolibreSchema {
 }
 export interface GeolibreParam {
   name: string;
-  data_kind?: string; // raster | vector | lidar | table | number | string | bool | file | json | text
+  data_kind?: string; // raster | vector | lidar | table | number | string | bool | file | json | text | field
   io_role?: 'input' | 'output';
   required?: boolean;
   description?: string;
   schema?: GeolibreSchema;
+  /** For an attribute-field param (data_kind 'field'): the sibling vector-layer param it draws fields from. */
+  field_from?: string;
 }
 export interface GeolibreManifest {
   id: string;
@@ -125,6 +127,8 @@ function mapParam(p: GeolibreParam, defaults?: Record<string, unknown>): ParamSp
   const optional = !p.required;
   const opts = enumOptions(p.schema);
   switch (p.data_kind) {
+    case 'field':
+      return { type: 'field', label, fromLayerParam: p.field_from ?? 'input', default: typeof def === 'string' ? def : undefined, optional };
     case 'raster':
       return { type: 'layer', label, accepts: ['raster'], optional };
     case 'vector':
@@ -349,10 +353,44 @@ function reclassifyStringFile(p: GeolibreParam, defaults: Record<string, unknown
   return { ...p, data_kind: kind };
 }
 
+// D2 (field selector): geolibre encodes a vector attribute-field name as a plain `string` param (and a few
+// are even mislabeled raster/lidar). The user can't know which column to type. We detect field params by
+// name (`field`, `fieldx`, `field_name`, `*_field`, `*_fields`) and rewire them to a `field` widget that
+// reads the columns of the vector layer the user picked in the sibling param. WBT confirms these are
+// VectorAttributeField tied to `--input` (whitebox-params.json), but the names alone are sufficient + stable.
+const FIELD_RE = /(^|_)fields?(_name)?$|^field[xy]$/i;
+const VECTOR_PARAM_PRIORITY = ['input', 'points', 'base', 'streams', 'lines', 'polygons', 'vector', 'i'];
+
+function isFieldName(name: string): boolean {
+  return name.toLowerCase() !== 'field_type' && FIELD_RE.test(name);
+}
+
+/** The vector-layer param that an attribute-field param draws its columns from (by name priority, else first). */
+function pickVectorParam(ps: GeolibreParam[]): string | undefined {
+  const vectors = ps.filter((p) => p.io_role !== 'output' && p.data_kind === 'vector');
+  if (!vectors.length) return undefined;
+  for (const name of VECTOR_PARAM_PRIORITY) {
+    const hit = vectors.find((p) => p.name.toLowerCase() === name);
+    if (hit) return hit.name;
+  }
+  return vectors[0]!.name;
+}
+
+/** Rewire a field-named param to data_kind 'field' (unless its default is a real file path or there's no vector sibling). */
+function reclassifyField(p: GeolibreParam, defaults: Record<string, unknown> | undefined, vectorParam: string | undefined): GeolibreParam {
+  if (p.io_role === 'output' || !isFieldName(p.name) || !vectorParam) return p;
+  const def = defaults?.[p.name];
+  if (typeof def === 'string' && FILE_EXT.test(def)) return p; // a real file masquerading as a field name
+  return { ...p, data_kind: 'field', field_from: vectorParam };
+}
+
 /** The params GeoLab actually uses: real manifest params (reclassified), or synthesized when the manifest is empty. */
 function effectiveParams(m: GeolibreManifest): GeolibreParam[] {
-  if (m.params && m.params.length > 0) return m.params.map((p) => reclassifyStringFile(p, m.defaults, m.category));
-  return synthesizeParams(m);
+  const base = m.params && m.params.length > 0
+    ? m.params.map((p) => reclassifyStringFile(p, m.defaults, m.category))
+    : synthesizeParams(m);
+  const vectorParam = pickVectorParam(base);
+  return base.map((p) => reclassifyField(p, m.defaults, vectorParam));
 }
 
 // ───────────────────────── the builder ─────────────────────────
