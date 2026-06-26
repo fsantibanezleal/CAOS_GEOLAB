@@ -67,7 +67,7 @@ export type ParamSpec =
   /** Pick a workspace layer of one of `accepts` kinds (the auto-form renders a layer dropdown). */
   | { type: 'layer'; label: string; accepts: PortKind[]; help?: string; optional?: boolean }
   /** Pick a field/attribute name of a vector layer chosen in another param. */
-  | { type: 'field'; label: string; fromLayerParam: string; help?: string; optional?: boolean }
+  | { type: 'field'; label: string; fromLayerParam: string; default?: string; help?: string; optional?: boolean }
   /** A coordinate reference system (proj4/EPSG). */
   | { type: 'crs'; label: string; default?: string; help?: string }
   /** A bounding box, typically drawn on the map. */
@@ -95,6 +95,8 @@ export interface Layer {
   stats?: Record<string, number>;
   /** Standard format tag, e.g. "COG", "GTiff", "GeoJSON", "FlatGeobuf", "LAZ". */
   format?: string;
+  /** Attribute fields of a vector/table layer (drives the field-selector widget). */
+  fields?: Array<{ name: string; numeric: boolean }>;
   /** Handle to the bytes in the virtual FS / OPFS. */
   bytesRef: string;
   /** The chain of tools/engines that produced this layer (provenance/lineage). */

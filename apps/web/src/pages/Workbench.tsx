@@ -9,7 +9,7 @@ import { readCogGrid, readCogBoundsLonLat } from '../engines/geolibre-io';
 import { writeSyntheticDem } from '../lib/dem';
 import type { Grid } from '../lib/grid';
 import { CMAPS, type CmapName } from '../lib/colormap';
-import { parseGeoJSON, geojsonBbox, geojsonSummary, type GeoJSONFeatureCollection } from '../lib/geojson';
+import { parseGeoJSON, geojsonBbox, geojsonSummary, geojsonFields, type GeoJSONFeatureCollection } from '../lib/geojson';
 import { RasterCanvas } from '../components/RasterCanvas';
 import { MapView } from '../components/MapView';
 import { TextOutputPanel } from '../components/TextOutputPanel';
@@ -149,6 +149,7 @@ export function Workbench() {
       } else if (res.kind === 'vector' && res.geojson) {
         wl.geojson = res.geojson;
         wl.geoBbox = geojsonBbox(res.geojson) ?? undefined;
+        layer.fields = geojsonFields(res.geojson);
       } else if (res.kind === 'table') {
         wl.textContent = new TextDecoder().decode(res.bytes);
       } else if (res.kind === 'pointcloud') {
@@ -194,7 +195,7 @@ export function Workbench() {
       const ref = `data/${id}.geojson`;
       fsRef.current.set(ref, bytes);
       addLayer({
-        layer: { id, name: file.name, kind: 'vector', format: 'GeoJSON', bytesRef: ref },
+        layer: { id, name: file.name, kind: 'vector', format: 'GeoJSON', bytesRef: ref, fields: geojsonFields(geojson) },
         cmap: 'viridis',
         geojson,
         geoBbox,
@@ -251,7 +252,7 @@ export function Workbench() {
         } catch {
           setLog((prev) => [`vector output "${out.name}" — could not parse as GeoJSON`, ...prev]);
         }
-        const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: 'vector', format: 'GeoJSON', bytesRef: ref, producedBy: [tool.provenance] };
+        const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: 'vector', format: 'GeoJSON', bytesRef: ref, producedBy: [tool.provenance], fields: geojson ? geojsonFields(geojson) : undefined };
         setWlayers((prev) => [{ layer, cmap: 'viridis', geojson, geoBbox }, ...prev]);
         if (!firstOut) firstOut = id;
 
