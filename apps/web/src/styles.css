@@ -133,8 +133,50 @@ h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
 .tool-list { list-style: none; margin: .6rem 0 0; padding: 0;
   display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .6rem; }
 .tool-list li { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .7rem .8rem; }
-.tool-name { font-weight: 600; display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; }
-.tool-sum { color: var(--fg-subtle); font-size: .85rem; margin: .25rem 0 .45rem; }
+.tool-name { font-weight: 600; }
+.tool-id { display: block; font-size: .72rem; margin-top: .15rem; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35; }
+.tool-sum { color: var(--fg-subtle); font-size: .85rem; margin: .35rem 0 .55rem; }
+
+/* D5: catalog — category tabs, clickable cards, pagination */
+.cat-tabs { display: flex; gap: .35rem; flex-wrap: wrap; margin: .2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: .7rem; }
+.cat-tab { background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--fg-subtle);
+  cursor: pointer; font-size: .82rem; padding: .3rem .7rem; text-transform: capitalize; white-space: nowrap; }
+.cat-tab:hover { background: var(--surface-2); color: var(--fg); }
+.cat-tab.on { background: var(--accent-soft); color: var(--fg); border-color: var(--border); font-weight: 600; }
+.tool-card { cursor: pointer; transition: border-color .12s, transform .12s; display: flex; flex-direction: column; }
+.tool-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.tool-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tool-card-foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: auto; }
+.tool-more { font-size: .76rem; color: var(--accent); font-weight: 600; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 1.4rem 0 .5rem; }
+.pager-info { font-size: .85rem; color: var(--fg); }
+
+/* D5: per-tool detail modal */
+.tool-modal { position: relative; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; max-width: 760px; width: 100%; padding: 1.4rem; max-height: 90vh; overflow-y: auto; }
+.tool-modal-head { margin-bottom: 1rem; }
+.tool-modal-head h2 { margin: 0 2rem 0 0; }
+.tool-modal-id { display: block; font-size: .78rem; margin: .2rem 0 .5rem; overflow-wrap: anywhere; }
+.tool-modal-chips { display: flex; gap: .4rem; flex-wrap: wrap; }
+.tool-modal-chips .chip { text-transform: capitalize; }
+.tool-modal-body { font-size: .9rem; line-height: 1.6; }
+.tm-lead { margin: 0 0 .7rem; font-size: .95rem; color: var(--fg); }
+.tm-note { margin: .4rem 0; color: var(--fg-subtle); }
+.tm-dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem .9rem; margin: .6rem 0; }
+.tm-dl dt { color: var(--fg-subtle); font-size: .82rem; }
+.tm-dl dd { margin: 0; }
+.tm-link { display: inline-block; margin-top: .5rem; color: var(--accent); font-weight: 600; text-decoration: none; }
+.tm-sub { font-weight: 600; margin: 1rem 0 .4rem; }
+.tm-code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: .7rem .8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; overflow-x: auto; white-space: pre; color: var(--fg); }
+.tm-io { display: flex; gap: .4rem; margin-top: .6rem; flex-wrap: wrap; }
+.tm-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.tm-table th, .tm-table td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tm-table th { color: var(--fg-subtle); font-weight: 600; }
+.tm-pdesc { color: var(--fg-subtle); font-size: .76rem; margin-top: .15rem; }
+.tm-out { margin: .3rem 0; padding-left: 1.1rem; }
+.tm-steps { margin: .3rem 0; padding-left: 1.2rem; }
+.tm-steps li { margin: .25rem 0; }
 
 /* workbench run panel */
 .run-steps { display: grid; gap: 1rem; grid-template-columns: 1fr 1.4fr; align-items: start; margin: 1rem 0; }

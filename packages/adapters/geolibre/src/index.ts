@@ -259,6 +259,29 @@ interface WbtTool {
 }
 const WBT_TOOLS = (WBT as { tools: Record<string, WbtTool> }).tools;
 
+/** Authoritative WhiteboxTools documentation for a tool (genuine descriptions — drives the per-tool detail modal). */
+export interface GeolibreToolDoc {
+  description?: string;
+  toolbox?: string;
+  params: Array<{ name: string; flag?: string; description?: string; optional?: boolean; default?: string | null }>;
+}
+export function geolibreToolDoc(toolId: string): GeolibreToolDoc | undefined {
+  const bare = toolId.replace(/^geolibre:/, '');
+  const wbt = WBT_TOOLS[bare];
+  if (!wbt) return undefined;
+  return {
+    description: wbt.description,
+    toolbox: wbt.toolbox,
+    params: (wbt.parameters ?? []).map((p) => ({
+      name: p.name ?? '',
+      flag: (p.flags ?? [])[0],
+      description: p.description,
+      optional: p.optional,
+      default: p.default_value ?? null,
+    })),
+  };
+}
+
 const FILE_EXT = /\.(tif|tiff|geojson|json|shp|fgb|gpkg|las|laz|zlidar|csv|dem|pmtiles|dat)$/i;
 const IO_NAMES = new Set([
   'input', 'inputs', 'i', 'dem', 'pntr', 'pointer', 'streams', 'pour_pts', 'base', 'points',
