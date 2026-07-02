@@ -48,13 +48,17 @@ export function Layout() {
         <Outlet />
       </main>
 
+      {/* Compact, to-the-point footer (ADR-0016 §2): brand + lab + author + single GitHub + license + version.
+          The personal/portfolio links already live in the header, so they are NOT repeated here (focus error). */}
       <footer className="ftr">
+        <span className="ftr-brand">GeoLab</span>
+        <span aria-hidden="true">·</span>
+        <span>{t('footer.lab')}</span>
+        <span aria-hidden="true">·</span>
         <span>{t('footer.by')}</span>
-        <span className="ftr-links">
-          <a href={EXTERNAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a>
-          <a href={EXTERNAL_LINKS.personal} target="_blank" rel="noreferrer">Personal</a>
-          <a href={EXTERNAL_LINKS.portfolio} target="_blank" rel="noreferrer">Portfolio</a>
-        </span>
+        <span aria-hidden="true">·</span>
+        <a href={EXTERNAL_LINKS.github} target="_blank" rel="noreferrer">GitHub</a>
+        <span aria-hidden="true">·</span>
         <span>{t('footer.license')} · v0.18.000</span>
       </footer>
 
