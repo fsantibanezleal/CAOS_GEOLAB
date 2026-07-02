@@ -3,6 +3,223 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.15.000] — 2026-06-23
+
+### Added — D4: download tool outputs
+- Every workspace layer (sample, upload, or tool output) now has a **Download** button (↓) in the Layers
+  panel → saves the real file (raster `.tif` / vector `.geojson` / text) with the correct name + MIME type.
+- Verified (headless): running Aspect → its output layer downloads as `aspect_output.tif`, 0 console errors.
+
+## [0.14.000] — 2026-06-23
+
+### Fixed — the 138 broken tools (D1 + D2)
+- **138 of 747 geolibre tools shipped EMPTY params** in the manifest (blank forms; runs failed "missing
+  required parameter 'input'"). Now FILLED from the authoritative WhiteboxTools metadata
+  (`packages/adapters/geolibre/src/whitebox-params.json`, baked offline via `data-pipeline/whitebox/`).
+  Key finding: geolibre (whitebox_next_gen) **renamed flags** vs standard WBT (`--input` not `--dem`,
+  `--target_size` not `--size`), so we synthesize geolibre-native names (`--input`/`--output` + the
+  manifest's own `defaults` keys) and use WBT only for the input KIND, enum OPTIONS and TYPES (which don't
+  drift). 102/138 covered by WBT v2.4.0 + the rest by category/`defaults` inference.
+- **D2 string-vs-file**: a `data_kind:'string'` input whose default looks like a file (`samples.gpkg`) or is
+  a known I/O name now renders a layer picker instead of a text box.
+- The augmentation mutates the cached manifest params so the form, the main-thread `run()` AND the worker's
+  `collectRunArgs()` all use the synthesized set.
+- **Screenshot-verified** (headless): Aspect (was blank) now shows the input picker + runs (correct aspect
+  map, `exit 0`); Isobasins runs (`exit 0`, no more "missing required parameter 'input'"); 0 console errors.
+
+### Tooling
+- `data-pipeline/whitebox/dump_params.py` (offline `.venv`) dumps WhiteboxTools params → the committed JSON.
+
+## [0.13.000] — 2026-06-23
+
+### Added — ⓘ Architecture modal (ADR-0058: 4-tab themed SVG explainer)
+
+- **`ArchModal` component** (`apps/web/src/components/ArchModal.tsx`) — replaces the scaffold
+  placeholder in the header ⓘ button with a full 4-tab architecture explainer (ADR-0058).
+- **Tab 1 — Architecture**: SVG diagram of the full platform stack inside a browser boundary:
+  Workbench + Pipeline Editor → Tool Registry → geolibre (WASM/Worker) · Turf.js (JS) ·
+  H3 (JS) · planned engines (GDAL · GEOS · mapshaper · libvips · ITK-Wasm); Your Files box
+  showing data flow without upload.
+- **Tab 2 — Engines**: visual card grid for the 3 wired engines (geolibre · Turf.js · H3)
+  with name, upstream project, license chip, active status chip, and tool count; planned-engines
+  pill list; adapter-interface SVG showing how Tool Registry fans out to each adapter.
+- **Tab 3 — Data Flow**: 6-step horizontal flow diagram (Your file → Virtual FS → Adapter →
+  Engine → Output → New layer) with step icons; technical detail rows for WASM vs JS paths and
+  raster vs vector render paths.
+- **Tab 4 — Privacy**: SVG diagram with browser boundary containing data (in memory) + engines +
+  output layers; "No server" zone (dashed red box) showing what is NOT sent; explicit list of
+  what IS sent (npm CDN for WASM on first load; map tile requests with view coords only; no
+  analytics, no cookies). Privacy guarantee callout.
+- All diagrams use CSS custom properties (`var(--fg)`, `var(--accent)`, `var(--border)`, etc.)
+  via SVG `style` attributes — full light/dark theme support with zero JS overhead.
+- **Bilingual (EN/ES)**: all tab labels, descriptions, and SVG text respect the UI language.
+- **CSS additions** (`.arch-modal`, `.arch-tabs`, `.arch-tab`, `.arch-body`, `.arch-desc`,
+  `.arch-engine-grid`, `.arch-engine-card`, `.arch-planned-*`, `.arch-flow-*`, `.arch-privacy-note`).
+- `Layout.tsx`: import `ArchModal`; inline placeholder block replaced with `<ArchModal onClose=…/>`;
+  unused `X` icon import removed; footer → `v0.13.000`.
+- All packages bumped to 0.13.0.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (2111 modules, 21.7 s).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
+## [0.12.000] — 2026-06-23
+
+### Added — H3 adapter (third engine, 8 hexagonal-grid tools)
+
+- **`@geolab/adapter-h3`** (`packages/adapters/h3/`) — new workspace package wrapping 8 Uber H3
+  (h3-js v4) hexagonal-grid functions as GeoLab `Tool` objects. Runs entirely on the **main thread**
+  (pure-JS, no WASM, no Web Worker): zero startup delay.
+- **8 tools registered** across two categories:
+  - *Vector GIS*: `h3:point-to-cell` (point → H3 cell polygon), `h3:polyfill` (polygon → H3 cell
+    fill at resolution), `h3:k-ring` (point → grid disk neighbourhood), `h3:compact` (compact
+    mixed-resolution cells), `h3:uncompact` (expand to uniform resolution), `h3:grid-path` (shortest
+    H3 path between two points)
+  - *Spatial statistics*: `h3:great-circle-distance` (geodesic distance between two points),
+    `h3:cell-info` (H3 cell ID / area / parent text report)
+- **H3 cell chaining**: polyfill / k-ring / grid-path outputs carry `properties.h3index` on each
+  feature so `h3:compact` and `h3:uncompact` can read them as layer inputs.
+- **`apps/web/src/engines/h3.ts`**: lazy singleton that builds H3 tools once on first use.
+- **`apps/web/src/lib/engines.ts`**: H3 status updated to `'wired'`; approxTools corrected to 8.
+- Workbench + Pipeline updated: `loadH3Tools()` merged into the all-tools list alongside Turf and
+  geolibre. Engine chip shows "H3 (Uber)" for h3 tools.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green.
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
+## [0.11.000] — 2026-06-23
+
+### Added — Turf.js adapter (second engine)
+
+- **`@geolab/adapter-turf`** (`packages/adapters/turf/`) — new workspace package wrapping 16 Turf.js
+  v7 vector-analysis functions as GeoLab `Tool` objects. Runs entirely on the **main thread** (no
+  WASM, no Web Worker): pure-JS, zero startup delay.
+- **16 tools registered** across three categories:
+  - *Measurement*: `turf:area`, `turf:length` → text output (m², km)
+  - *Geometry constructors / extractions*: `turf:centroid`, `turf:center`, `turf:envelope`,
+    `turf:convex`, `turf:point-on-feature`, `turf:explode`, `turf:flatten`
+  - *Transformations*: `turf:buffer`, `turf:simplify`, `turf:dissolve`, `turf:transform-rotate`,
+    `turf:transform-scale`, `turf:transform-translate`
+  - *Set operations*: `turf:union`, `turf:intersect`, `turf:difference` (two-layer)
+- **Multi-engine execution model** in Workbench and Pipeline: branch on engine type — geolibre WASM
+  tools continue to run via the existing Web Worker path; Turf tools execute with `tool.run(ctx,
+  params)` directly on the main thread. Engine chips in the UI show "Turf.js" for turf tools.
+- **`apps/web/src/engines/turf.ts`**: lazy singleton that builds Turf tools once on first use.
+- **`apps/web/src/lib/engines.ts`**: geolibre and turf status both updated to `'wired'`.
+- Engines panel in the Toolbox now shows both geolibre and turf as active engines.
+
+## [0.10.000] — 2026-06-23
+
+### Added — Pipeline node editor (React Flow)
+
+- **Pipeline page** (`/pipeline` route) added to the navigation alongside Workbench / Tools / Credits.
+- **React Flow canvas** (`@xyflow/react ^12`): an interactive DAG editor where each node is a geolibre
+  tool. Nodes are draggable; handles on left (input) and right (output) can be connected by dragging.
+  Deleting a selected node with the Delete key removes it and its edges.
+- **Tool sidebar**: a searchable mini-toolbox (up to 80 results shown, refine-search hint) — clicking
+  any tool adds it as a new node on the canvas at a staggered position.
+- **Node configuration panel** (right): clicking a node shows the tool's name, engine chip, summary,
+  and an inline param form (number/integer/boolean/string/enum/layer inputs; output specs hidden).
+- **Topological execution**: "Run pipeline" calls `topologicalOrder()` from `@geolab/tool-core` to
+  compute the correct execution order, then runs each tool sequentially via the existing geolibre
+  worker. The first output of each upstream node is wired as an input byte buffer to the next
+  downstream node automatically (first-match approach).
+- **Node status badges**: idle / running (⏳) / done (✓) / error (✗) shown on each node, with outline
+  colour change (accent for selected, good/bad/warn for status).
+- **Pipeline run log**: a collapsible `<details>` in the right panel shows a per-node log entry after
+  the run, coloured by success/failure.
+- **Cancel**: the abort flag causes the execution loop to stop after the current node completes.
+- **Save Recipe**: "Save Recipe" button downloads the pipeline as a `geolab-recipe-<ts>.json`
+  (the `Recipe` type from `@geolab/tool-core`: schemaVersion 1, pipeline nodes/edges, toolVersions,
+  createdWith).
+- **Load Recipe**: "Load Recipe" button parses a previously saved JSON file and restores nodes, edges,
+  and per-node params, looking up tool names from the live catalog.
+- **Dark-mode overrides** for React Flow background, minimap, and controls.
+- All packages bumped to 0.10.0; footer display string → `v0.10.000`.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (1818 modules, 14.7 s).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
+## [0.09.000] — 2026-06-23
+
+### Added — GeoJSON upload (bring-your-own vector layer)
+
+- **GeoJSON upload**: the "Upload layer" toolbar button now accepts both `.tif/.tiff` (raster) and
+  `.geojson/.json` (vector). The file type is detected by extension; GeoJSON files go through
+  `uploadGeoJSONFile()` instead of the raster path.
+- **uploadGeoJSONFile**: reads bytes, calls `parseGeoJSON()` + `geojsonBbox()` + `geojsonSummary()`,
+  stores bytes in the virtual FS under `data/<id>.geojson`, and adds a `WLayer` with
+  `kind: 'vector'`, `geojson`, and `geoBbox` set. The layer appears immediately in the Layers panel,
+  auto-switches to Map view, and the MapView renders it via the existing `applyVectorOverlay()` path.
+- **Feature summary in log**: a `Loaded: N features (type…)` log line appears after upload,
+  mirroring the log entry written for tool-produced vector outputs.
+- **Vector layer as tool input**: `defaultsFor()` now accepts a `vectorLayerId` argument and
+  pre-fills tool parameters of `type: 'layer', accepts: ['vector']` with the first available vector
+  layer (or the active layer if it is a vector). `selectTool()` passes `firstVectorId()` to it.
+  `collectRunArgs()` already handled vector layers via `bytesRef` — no adapter changes needed.
+- **firstVectorId helper**: mirrors `firstRasterId()`, finds the first vector layer in the workspace
+  (preferring the active layer if it matches).
+- **i18n**: `wb.upload` → "Upload layer" / "Subir capa"; `wb.toolboxHint` + `wb.intro` + `layers.none`
+  updated to mention GeoJSON; `wb.uploadHint` added (EN + ES) for future tooltip use.
+- All packages bumped to 0.9.0; footer display string → `v0.09.000`.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green.
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
+## [0.08.000] — 2026-06-23
+
+### Added — render non-raster tool outputs
+
+- **Vector output rendering**: when a tool produces a `.geojson` output (`kind: 'vector'`), the bytes are
+  decoded as UTF-8, parsed with `parseGeoJSON()`, and added to the workspace as a vector layer. The Map
+  view renders it as three MapLibre GL layers — fill (Polygon/MultiPolygon), line (LineString + outline),
+  and circle (Point/MultiPoint) — all in the GeoLab accent colour.
+- **Auto-bounds**: `geojsonBbox()` in `lib/geojson.ts` computes `[minLon, minLat, maxLon, maxLat]` from
+  the feature coordinates so `fitBounds()` zooms the map to the result automatically.
+- **Auto-switch to Map**: when the active layer changes to `kind: 'vector'`, the workbench center panel
+  automatically switches from Grid to Map mode; the Grid tab becomes disabled with a tooltip.
+- **Text / table output panel**: tools that produce `text`, `table`, or `pointcloud` outputs have their
+  bytes decoded as UTF-8 and shown in a `TextOutputPanel` (scrollable monospace pre block, max 340 px).
+  The Grid/Map toggle is hidden — neither applies to non-spatial text.
+- **Pointcloud info hint**: when the output is a binary LiDAR file (`kind: 'pointcloud'`), the panel adds
+  a notice explaining the file is binary and directs the user to the tool log for statistics.
+- **Vector feature summary in log**: after a vector run, the log line `vector output: N features (type…)`
+  gives an immediate summary without switching views.
+- **MapView extended**: `MapView` now accepts `geojson: GeoJSONFeatureCollection | null` and `geoBbox`
+  props. Raster and vector overlays share the same map instance (one active at a time); each effect clears
+  the other's source + layers before applying. `GeoJSONSource.setData()` is used for in-place updates
+  (no source removal round-trip on data change).
+- New files: `lib/geojson.ts` (parse + bbox + summary); `components/TextOutputPanel.tsx`.
+- New CSS: `.text-out-panel`, `.text-out-pre`, `.vtab:disabled`.
+- `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (1657 modules, 13 s).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+- Merged via **PR #12** → develop.
+
+## [0.07.000] — 2026-06-23
+
+### Added — Refined auto-forms
+
+- **Output-only schema detection**: tools whose entire parameter schema consists only of output specs
+  (no input parameters) now render a clear "No input parameters required — click Run to proceed"
+  affordance instead of a silent empty form.
+- **Number/integer widgets**: `min`, `max`, and `step` constraints from `ParamSpec` are now passed to
+  the `<input type="number">` element, preventing out-of-range values at the browser level.
+- **Extent widget** (`type: 'extent'`): the "coming" placeholder is replaced with a real 4-input
+  bounding-box form (Min X / Min Y / Max X / Max Y). Values are stored as `[number, number, number,
+  number]` and formatted as a comma-separated string when passed as a CLI arg.
+- **Multiline string widget**: `ParamSpec` `{ type: 'string', multiline: true }` renders a `<textarea>`
+  instead of a single-line text input.
+- **File widget** (`type: 'file'`): replaces the "coming" placeholder with an `<input type="file">` that
+  reads the file bytes asynchronously (via `arrayBuffer()`) and stores `{ name, bytes }` in the params
+  state. `collectRunArgs` in `@geolab/adapter-geolibre` now handles these file-value objects — adds the
+  bytes to the input map and emits the correct `--param=/work/<name>` CLI argument.
+- **Layer availability hint**: when a `type: 'layer'` param requires a layer kind that has no matching
+  layers in the workspace (e.g. vector or pointcloud), the widget shows "No [kind] layers — generate or
+  upload one first" instead of an empty/confusing dropdown.
+- **Optional param label**: optional (non-required) parameters now show an `(optional)` label suffix,
+  making required vs optional fields immediately clear.
+- **Pre-run validation**: `runSelected()` in the Workbench now validates all required params before
+  dispatching to the Web Worker. Missing required fields are highlighted with a red border and an inline
+  "Required" error message; errors clear automatically as the user fills them in.
+- `collectRunArgs` now handles array values (extent `[minX,minY,maxX,maxY]` → comma-joined string) and
+  file-like values (`{name, bytes}` → added to the input map with a `/work/<name>` path arg).
+- No browser in cloud env → screenshot **skipped** (stated explicitly).
+
 ## [0.06.001] — 2026-06-23
 
 ### Fixed

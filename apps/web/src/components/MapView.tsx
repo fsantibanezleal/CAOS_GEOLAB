@@ -1,22 +1,27 @@
 import { useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Grid } from '../lib/grid';
 import type { RGB } from '../lib/colormap';
+import type { GeoJSONFeatureCollection } from '../lib/geojson';
 
 interface Props {
   grid: Grid | null;
   colormap: (t: number) => RGB;
   lonLatBbox: [number, number, number, number] | null;
+  geojson?: GeoJSONFeatureCollection | null;
+  geoBbox?: [number, number, number, number] | null;
   title?: string;
   opacity?: number;
 }
 
-const SRC_ID = 'geolab-raster';
-const LYR_ID = 'geolab-raster-layer';
+const RST_SRC = 'geolab-raster';
+const RST_LYR = 'geolab-raster-layer';
+const VEC_SRC = 'geolab-vector';
+const VEC_FILL = 'geolab-vec-fill';
+const VEC_LINE = 'geolab-vec-line';
+const VEC_CIRCLE = 'geolab-vec-circle';
 
-// No-API-key raster basemap (OpenStreetMap) so the overlay has real geographic context. Cross-origin tiles
-// load fine without cross-origin isolation. For heavy public traffic, swap to a keyed provider (MapTiler/Stadia).
 const OSM_STYLE = {
   version: 8,
   sources: {
@@ -31,7 +36,6 @@ const OSM_STYLE = {
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
 } as maplibregl.StyleSpecification;
 
-/** Render the grid + colormap to an offscreen canvas and return a PNG data URL. */
 function gridToDataUrl(grid: Grid, colormap: (t: number) => RGB): string {
   const cv = document.createElement('canvas');
   cv.width = grid.width;
@@ -54,7 +58,19 @@ function gridToDataUrl(grid: Grid, colormap: (t: number) => RGB): string {
   return cv.toDataURL('image/png');
 }
 
-function applyOverlay(
+function clearRaster(map: maplibregl.Map) {
+  if (map.getLayer(RST_LYR)) map.removeLayer(RST_LYR);
+  if (map.getSource(RST_SRC)) map.removeSource(RST_SRC);
+}
+
+function clearVector(map: maplibregl.Map) {
+  for (const id of [VEC_FILL, VEC_LINE, VEC_CIRCLE]) {
+    if (map.getLayer(id)) map.removeLayer(id);
+  }
+  if (map.getSource(VEC_SRC)) map.removeSource(VEC_SRC);
+}
+
+function applyRasterOverlay(
   map: maplibregl.Map,
   dataUrl: string,
   bbox: [number, number, number, number],
@@ -62,28 +78,64 @@ function applyOverlay(
 ) {
   const [minLon, minLat, maxLon, maxLat] = bbox;
   const coordinates: [[number, number], [number, number], [number, number], [number, number]] = [
-    [minLon, maxLat],
-    [maxLon, maxLat],
-    [maxLon, minLat],
-    [minLon, minLat],
+    [minLon, maxLat], [maxLon, maxLat], [maxLon, minLat], [minLon, minLat],
   ];
-
-  if (map.getLayer(LYR_ID)) map.removeLayer(LYR_ID);
-  if (map.getSource(SRC_ID)) map.removeSource(SRC_ID);
-
-  map.addSource(SRC_ID, { type: 'image', url: dataUrl, coordinates });
-  map.addLayer({ id: LYR_ID, type: 'raster', source: SRC_ID, paint: { 'raster-opacity': opacity } });
+  clearRaster(map);
+  map.addSource(RST_SRC, { type: 'image', url: dataUrl, coordinates });
+  map.addLayer({ id: RST_LYR, type: 'raster', source: RST_SRC, paint: { 'raster-opacity': opacity } });
   map.fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding: 60, animate: false, maxZoom: 16 });
 }
 
-export function MapView({ grid, colormap, lonLatBbox, title, opacity = 0.85 }: Props) {
+function applyVectorOverlay(
+  map: maplibregl.Map,
+  geojson: GeoJSONFeatureCollection,
+  bbox: [number, number, number, number],
+) {
+  const src = map.getSource(VEC_SRC) as GeoJSONSource | undefined;
+  if (src) {
+    src.setData(geojson as unknown as Parameters<GeoJSONSource['setData']>[0]);
+  } else {
+    map.addSource(VEC_SRC, { type: 'geojson', data: geojson as unknown as Parameters<GeoJSONSource['setData']>[0] });
+    map.addLayer({
+      id: VEC_FILL, type: 'fill', source: VEC_SRC,
+      filter: ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]],
+      paint: { 'fill-color': '#0ea875', 'fill-opacity': 0.3 },
+    });
+    map.addLayer({
+      id: VEC_LINE, type: 'line', source: VEC_SRC,
+      filter: ['any',
+        ['in', ['geometry-type'], ['literal', ['LineString', 'MultiLineString']]],
+        ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]],
+      ],
+      paint: { 'line-color': '#0ea875', 'line-width': 1.5 },
+    });
+    map.addLayer({
+      id: VEC_CIRCLE, type: 'circle', source: VEC_SRC,
+      filter: ['in', ['geometry-type'], ['literal', ['Point', 'MultiPoint']]],
+      paint: {
+        'circle-color': '#0ea875', 'circle-radius': 5,
+        'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5,
+      },
+    });
+  }
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  // Expand tiny bboxes (single point) so fitBounds works.
+  const pad = 0.001;
+  map.fitBounds(
+    [[minLon - pad, minLat - pad], [maxLon + pad, maxLat + pad]],
+    { padding: 60, animate: false, maxZoom: 14 },
+  );
+}
+
+export function MapView({ grid, colormap, lonLatBbox, geojson, geoBbox, title, opacity = 0.85 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const pendingRef = useRef<{ dataUrl: string; bbox: [number, number, number, number] } | null>(null);
+  const pendingRasterRef = useRef<{ dataUrl: string; bbox: [number, number, number, number] } | null>(null);
+  const pendingVecRef = useRef<{ geojson: GeoJSONFeatureCollection; bbox: [number, number, number, number] } | null>(null);
 
+  // Init map once.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: OSM_STYLE,
@@ -91,45 +143,46 @@ export function MapView({ grid, colormap, lonLatBbox, title, opacity = 0.85 }: P
       zoom: 1,
       attributionControl: { compact: true },
     });
-
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
     map.on('load', () => {
-      const p = pendingRef.current;
-      if (p) {
-        applyOverlay(map, p.dataUrl, p.bbox, opacity);
-        pendingRef.current = null;
-      }
+      const pr = pendingRasterRef.current;
+      if (pr) { applyRasterOverlay(map, pr.dataUrl, pr.bbox, opacity); pendingRasterRef.current = null; }
+      const pv = pendingVecRef.current;
+      if (pv) { applyVectorOverlay(map, pv.geojson, pv.bbox); pendingVecRef.current = null; }
     });
-
     mapRef.current = map;
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
+    return () => { map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Raster overlay — clear vector first.
   useEffect(() => {
     if (!grid || !lonLatBbox) return;
     const dataUrl = gridToDataUrl(grid, colormap);
     const map = mapRef.current;
-
-    if (!map || !map.loaded()) {
-      pendingRef.current = { dataUrl, bbox: lonLatBbox };
-      return;
-    }
-    applyOverlay(map, dataUrl, lonLatBbox, opacity);
+    if (!map?.loaded()) { pendingRasterRef.current = { dataUrl, bbox: lonLatBbox }; return; }
+    clearVector(map);
+    applyRasterOverlay(map, dataUrl, lonLatBbox, opacity);
   }, [grid, colormap, lonLatBbox, opacity]);
+
+  // Vector overlay — clear raster first.
+  useEffect(() => {
+    if (!geojson || !geoBbox) return;
+    const map = mapRef.current;
+    if (!map?.loaded()) { pendingVecRef.current = { geojson, bbox: geoBbox }; return; }
+    clearRaster(map);
+    applyVectorOverlay(map, geojson, geoBbox);
+  }, [geojson, geoBbox]);
+
+  const hasData = grid || geojson;
+  const noGeoHint = grid && !lonLatBbox;
 
   return (
     <div className="mapview">
       {title && <div className="rtitle">{title}</div>}
       <div ref={containerRef} className="maplibre-wrap" />
-      {grid && !lonLatBbox && (
-        <div className="map-no-geo">No spatial reference — cannot place on basemap</div>
-      )}
-      {!grid && <div className="map-no-geo">Generate or upload a raster to see it on the map</div>}
+      {noGeoHint && <div className="map-no-geo">No spatial reference — cannot place on basemap</div>}
+      {!hasData && <div className="map-no-geo">Generate or upload a layer to see it on the map</div>}
     </div>
   );
 }

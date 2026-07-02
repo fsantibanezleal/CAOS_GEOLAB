@@ -1,6 +1,6 @@
 {
   "name": "@geolab/adapter-geolibre",
-  "version": "0.6.1",
+  "version": "0.15.0",
   "private": true,
   "type": "module",
   "description": "Adapter mapping geolibre-wasm (WhiteboxTools + GeoLibre, MIT) tools into the GeoLab Tool registry.",
@@ -19,5 +19,5 @@
   "devDependencies": {
     "typescript": "^5.6.3"
   },
-  "comments": "geolibre-wasm is loaded at RUNTIME and injected (dependency injection), so this package does not statically depend on it — the engine is swappable and the build stays light."
+  "comments": "geolibre-wasm is loaded at RUNTIME and injected (dependency injection), so this package does not statically depend on it \u2014 the engine is swappable and the build stays light."
 }

@@ -1,7 +1,7 @@
 {
   "name": "caos-geolab",
   "private": true,
-  "version": "0.6.1",
+  "version": "0.18.0",
   "description": "GeoLab — browser-native, no-install, multi-engine geospatial tool platform (ADR-0059).",
   "license": "MIT",
   "author": "Felipe Santibañez-Leal",
