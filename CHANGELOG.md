@@ -3,6 +3,18 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.18.000] · 2026-07-03
+### Added
+- D5: catalog tabs + pagination + a per-tool detail modal.
+
+## [0.17.000] · 2026-07-03
+### Added
+- D2: attribute-field selector for the vector tools.
+
+## [0.16.000] · 2026-07-03
+### Added
+- D3: dozens of synthetic samples across every tool category (workbench).
+
 ## [0.15.000] — 2026-06-23
 
 ### Added — D4: download tool outputs
