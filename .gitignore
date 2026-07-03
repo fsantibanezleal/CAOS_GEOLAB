@@ -6,7 +6,7 @@ build/
 .vite/
 coverage/
 
-# env / secrets (secrets live ONLY in _CAOS_MANAGE — commit .env.example only)
+# env / secrets (never commit secrets — commit .env.example only)
 .env
 .env.*
 !.env.example

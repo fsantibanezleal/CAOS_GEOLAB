@@ -1,5 +1,8 @@
 # GeoLab
 
+[![License](https://img.shields.io/github/license/fsantibanezleal/CAOS_GEOLAB)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-2ea44f)](https://geolab.fasl-work.com)
+
 **Browser-native, no-install, multi-engine geospatial tool platform.** Load a DEM / GeoTIFF / vector /
 point cloud (a bundled sample **or your own file**), run **real geoprocessing tools**, **chain them into
 reusable pipelines**, and explore the result on an interactive map / 3D canvas — **entirely in your
