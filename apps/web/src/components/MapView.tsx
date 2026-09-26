@@ -155,7 +155,7 @@ export function MapView({ grid, colormap, lonLatBbox, geojson, geoBbox, title, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Raster overlay — clear vector first.
+  // Raster overlay, clear vector first.
   useEffect(() => {
     if (!grid || !lonLatBbox) return;
     const dataUrl = gridToDataUrl(grid, colormap);
@@ -165,7 +165,7 @@ export function MapView({ grid, colormap, lonLatBbox, geojson, geoBbox, title, o
     applyRasterOverlay(map, dataUrl, lonLatBbox, opacity);
   }, [grid, colormap, lonLatBbox, opacity]);
 
-  // Vector overlay — clear raster first.
+  // Vector overlay, clear raster first.
   useEffect(() => {
     if (!geojson || !geoBbox) return;
     const map = mapRef.current;
@@ -181,7 +181,7 @@ export function MapView({ grid, colormap, lonLatBbox, geojson, geoBbox, title, o
     <div className="mapview">
       {title && <div className="rtitle">{title}</div>}
       <div ref={containerRef} className="maplibre-wrap" />
-      {noGeoHint && <div className="map-no-geo">No spatial reference — cannot place on basemap</div>}
+      {noGeoHint && <div className="map-no-geo">No spatial reference, cannot place on basemap</div>}
       {!hasData && <div className="map-no-geo">Generate or upload a layer to see it on the map</div>}
     </div>
   );

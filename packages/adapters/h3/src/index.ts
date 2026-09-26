@@ -1,5 +1,5 @@
 /**
- * H3 adapter — maps 8 Uber H3 (h3-js v4) hexagonal-grid functions into GeoLab Tool objects.
+ * H3 adapter: maps 8 Uber H3 (h3-js v4) hexagonal-grid functions into GeoLab Tool objects.
  *
  * All tools run on the MAIN THREAD (pure-JS, no WASM). H3 cell IDs are hexadecimal strings;
  * the tools surface them as GeoJSON feature properties so downstream tools can chain on them.
@@ -90,7 +90,7 @@ function firstPointLatLng(fc: FeatureCollection): [number, number] {
       return [lat, lng];
     }
   }
-  throw new Error('No Point feature found in layer — upload a GeoJSON with Point geometry.');
+  throw new Error('No Point feature found in layer, upload a GeoJSON with Point geometry.');
 }
 
 /** Extract H3 cell IDs from the h3index property of each feature in a FeatureCollection. */
@@ -194,7 +194,7 @@ export function buildH3Tools(): Tool[] {
           }
         }
 
-        if (cells.length === 0) throw new Error('No H3 cells found — try a lower resolution or a larger polygon.');
+        if (cells.length === 0) throw new Error('No H3 cells found, try a lower resolution or a larger polygon.');
         if (cells.length > 50_000) throw new Error(`Too many cells at res ${res}: ${cells.length}. Lower the resolution.`);
 
         return vectorOutput(ctx, 'polyfill', cellsToFC(cells));
@@ -276,7 +276,7 @@ export function buildH3Tools(): Tool[] {
         const res = typeof params['resolution'] === 'number' ? Math.round(params['resolution']) : 7;
         const ids = extractCellIds(fc);
         const expanded = uncompactCells(ids, res);
-        if (expanded.length > 50_000) throw new Error(`Uncompact at res ${res} produced ${expanded.length} cells — choose a lower resolution.`);
+        if (expanded.length > 50_000) throw new Error(`Uncompact at res ${res} produced ${expanded.length} cells, choose a lower resolution.`);
         return vectorOutput(ctx, 'uncompact', cellsToFC(expanded));
       },
     },
@@ -290,8 +290,8 @@ export function buildH3Tools(): Tool[] {
       category: 'vector-gis',
       version: '4.4.0',
       params: {
-        layerA: { type: 'layer', label: 'Layer A — origin point', accepts: ['vector'] },
-        layerB: { type: 'layer', label: 'Layer B — destination point', accepts: ['vector'] },
+        layerA: { type: 'layer', label: 'Layer A, origin point', accepts: ['vector'] },
+        layerB: { type: 'layer', label: 'Layer B, destination point', accepts: ['vector'] },
         resolution: { type: 'integer', label: 'H3 resolution (0–15)', default: 7, min: 0, max: 15 },
         output: { type: 'output', label: 'Path cells', kind: 'vector' },
       },
@@ -321,8 +321,8 @@ export function buildH3Tools(): Tool[] {
       category: 'spatial-statistics',
       version: '4.4.0',
       params: {
-        layerA: { type: 'layer', label: 'Layer A — origin point', accepts: ['vector'] },
-        layerB: { type: 'layer', label: 'Layer B — destination point', accepts: ['vector'] },
+        layerA: { type: 'layer', label: 'Layer A, origin point', accepts: ['vector'] },
+        layerB: { type: 'layer', label: 'Layer B, destination point', accepts: ['vector'] },
         units: {
           type: 'enum',
           label: 'Units',

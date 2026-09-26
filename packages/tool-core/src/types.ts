@@ -1,12 +1,12 @@
 /**
  * GeoLab core type contract (engine-agnostic). ADR-0059.
  *
- * Every geoprocessing capability — whether it comes from geolibre-wasm, GDAL, GEOS, Turf, or our own
- * `geolab-tools` — is exposed as a {@link Tool}. A Tool declares a typed {@link ParamSchema} (so the UI
+ * Every geoprocessing capability: whether it comes from geolibre-wasm, GDAL, GEOS, Turf, or our own
+ * `geolab-tools`: is exposed as a {@link Tool}. A Tool declares a typed {@link ParamSchema} (so the UI
  * can auto-generate its form), typed I/O ports, a {@link Provenance} record (so the UI can show where it
  * comes from), and a `run()` that executes on a {@link ToolRunContext} (off the main thread).
  *
- * Tools chain into a {@link Pipeline} (a DAG) that serialises to a shareable {@link Recipe} — the
+ * Tools chain into a {@link Pipeline} (a DAG) that serialises to a shareable {@link Recipe}: the
  * reproducibility unit (recipe + input hash + pinned tool versions), the on-demand analogue of a
  * deterministic-replay trace.
  */
@@ -14,7 +14,7 @@
 /** The kind of data flowing on a tool port / held by a workspace layer. */
 export type PortKind = 'raster' | 'vector' | 'pointcloud' | 'table' | 'text' | 'scalar';
 
-/** Top-level tool taxonomy (mirrors WhiteboxTools + GeoLibre; scales to thousands — dossier 04 §5). */
+/** Top-level tool taxonomy (mirrors WhiteboxTools + GeoLibre; scales to thousands, dossier 04 §5). */
 export type ToolCategory =
   | 'data-io'
   | 'projections-crs'
@@ -32,7 +32,7 @@ export type ToolCategory =
 
 // ───────────────────────────── Provenance & licensing (dossier 05 §4) ─────────────────────────────
 
-/** License classification — drives where a tool may live (core vs segregated module) + the source chip. */
+/** License classification, drives where a tool may live (core vs segregated module) + the source chip. */
 export type LicenseTier = 'permissive' | 'weak-copyleft' | 'strong-copyleft';
 
 export interface License {
@@ -41,7 +41,7 @@ export interface License {
   tier: LicenseTier;
 }
 
-/** Where a tool came from — shown in the UI (source chip + Credits page) and used for license compliance. */
+/** Where a tool came from, shown in the UI (source chip + Credits page) and used for license compliance. */
 export interface Provenance {
   /** Short engine id, e.g. "geolibre", "gdal", "geos", "turf", "h3", "geolab" (our own). */
   engine: string;
@@ -72,7 +72,7 @@ export type ParamSpec =
   | { type: 'crs'; label: string; default?: string; help?: string }
   /** A bounding box, typically drawn on the map. */
   | { type: 'extent'; label: string; help?: string; optional?: boolean }
-  /** Bring-your-own file (never uploaded — read in-browser). */
+  /** Bring-your-own file (never uploaded, read in-browser). */
   | { type: 'file'; label: string; accept?: string[]; help?: string }
   /** A named output the tool will produce. */
   | { type: 'output'; label: string; kind: PortKind; defaultName?: string };

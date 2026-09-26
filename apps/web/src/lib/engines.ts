@@ -1,5 +1,5 @@
 /**
- * The engine catalog — real data (dossier 05 §1) powering the Workbench engine panel + the Credits page +
+ * The engine catalog: real data (dossier 05 §1) powering the Workbench engine panel + the Credits page +
  * the per-tool provenance chips. `approxTools` are honest estimates of how many tools each engine can
  * contribute; `status` reflects integration reality (not aspiration).
  */

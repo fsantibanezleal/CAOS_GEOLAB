@@ -1,4 +1,4 @@
-/** Single source of truth for top-level routes (ADR-0016 §1 — router + nav both read this). */
+/** Single source of truth for top-level routes (ADR-0016 §1, router + nav both read this). */
 export interface AppRoute {
   path: string;
   /** i18n key for the nav label. */

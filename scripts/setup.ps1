@@ -1,4 +1,4 @@
-# GeoLab setup (Windows / PowerShell). Uses pnpm via corepack — no global installs.
+# GeoLab setup (Windows / PowerShell). Uses pnpm via corepack: no global installs.
 $ErrorActionPreference = 'Stop'
 corepack enable
 corepack prepare pnpm@10.7.1 --activate

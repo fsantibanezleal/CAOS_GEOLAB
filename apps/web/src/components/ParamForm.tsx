@@ -15,14 +15,14 @@ interface Props {
   errors?: Record<string, string>;
 }
 
-/** Auto-generated form from a tool's typed ParamSchema (the QGIS-Processing pattern — dossier 04 §3). */
+/** Auto-generated form from a tool's typed ParamSchema (the QGIS-Processing pattern, dossier 04 §3). */
 export function ParamForm({ schema, values, onChange, layers, errors }: Props) {
   const inputEntries = Object.entries(schema).filter(([, spec]) => spec.type !== 'output');
 
   if (inputEntries.length === 0) {
     return (
       <div className="pform-empty">
-        No input parameters required — click <strong>Run</strong> to proceed.
+        No input parameters required, click <strong>Run</strong> to proceed.
       </div>
     );
   }
@@ -97,7 +97,7 @@ function renderWidget(
       const str = value === undefined || value === null ? '' : String(value);
       return (
         <select id={id} value={str} onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(key, e.target.value || undefined)}>
-          <option value="">— choose —</option>
+          <option value="">, choose, </option>
           {spec.options.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
@@ -165,7 +165,7 @@ function LayerWidget({
   if (matching.length === 0) {
     return (
       <span className="pform-hint">
-        No {kindLabel} layers — generate or upload one first.
+        No {kindLabel} layers, generate or upload one first.
       </span>
     );
   }
@@ -176,7 +176,7 @@ function LayerWidget({
       value={str}
       onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(paramKey, e.target.value || undefined)}
     >
-      <option value="">— select {kindLabel} layer —</option>
+      <option value="">, select {kindLabel} layer, </option>
       {matching.map((l) => (
         <option key={l.id} value={l.id}>{l.name}</option>
       ))}
@@ -213,14 +213,14 @@ function FieldWidget({
   }, [layer?.id, fields.length]);
 
   if (!layer) {
-    return <span className="pform-hint">Select the <strong>{spec.fromLayerParam}</strong> layer first — its columns appear here.</span>;
+    return <span className="pform-hint">Select the <strong>{spec.fromLayerParam}</strong> layer first, its columns appear here.</span>;
   }
   if (fields.length === 0) {
     return <span className="pform-hint">“{layer.name}” has no attribute fields to choose from.</span>;
   }
   return (
     <select id={id} value={str} onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(paramKey, e.target.value || undefined)}>
-      <option value="">— select field —</option>
+      <option value="">, select field, </option>
       {fields.map((f) => (
         <option key={f.name} value={f.name}>{f.name}{f.numeric ? ' (number)' : ' (text)'}</option>
       ))}

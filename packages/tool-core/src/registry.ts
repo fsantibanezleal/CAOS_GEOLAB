@@ -1,4 +1,4 @@
-/** The Tool registry — the single place every engine's tools (and our own) are registered + searched. */
+/** The Tool registry, the single place every engine's tools (and our own) are registered + searched. */
 import type { Tool, ToolCategory } from './types.js';
 
 export class ToolRegistry {
@@ -45,7 +45,7 @@ export class ToolRegistry {
     return this.tools.size;
   }
 
-  /** Tool counts grouped by source engine — powers the "1,000+ tools across N engines" headline + Credits. */
+  /** Tool counts grouped by source engine, powers the "1,000+ tools across N engines" headline + Credits. */
   countsByEngine(): Record<string, number> {
     const out: Record<string, number> = {};
     for (const t of this.tools.values()) out[t.provenance.engine] = (out[t.provenance.engine] ?? 0) + 1;

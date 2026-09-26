@@ -25,7 +25,7 @@ export function demSinks(W = 256, H = 256): Float32Array {
   return v;
 }
 
-/** A near-conical peak (steep flanks) — a slope/aspect stress test. */
+/** A near-conical peak (steep flanks), a slope/aspect stress test. */
 export function demCone(W = 200, H = 200): Float32Array {
   const v = new Float32Array(W * H);
   for (let y = 0; y < H; y++) {

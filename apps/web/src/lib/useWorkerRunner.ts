@@ -1,5 +1,5 @@
 /**
- * useWorkerRunner — runs a geolibre tool in a Web Worker, keeping the main thread responsive.
+ * useWorkerRunner: runs a geolibre tool in a Web Worker, keeping the main thread responsive.
  * Exposes progress (fraction 0-1 + message), cancellation, and a stable `run` function.
  *
  * One worker is shared across all hook instances (module-level singleton). The engine loads once

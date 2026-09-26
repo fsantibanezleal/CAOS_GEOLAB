@@ -1,4 +1,4 @@
-/** GeoJSON utilities — parse, bbox, summary. Used for rendering vector tool outputs. */
+/** GeoJSON utilities, parse, bbox, summary. Used for rendering vector tool outputs. */
 
 export interface GeoJSONFeatureCollection {
   type: 'FeatureCollection';
