@@ -1,4 +1,4 @@
-/** Declarative catalog of synthetic sample datasets — the Workbench "Add sample" menu reads this. */
+/** Declarative catalog of synthetic sample datasets, the Workbench "Add sample" menu reads this. */
 import type { PortKind } from '@geolab/tool-core';
 import type { Grid } from '../grid';
 import type { GeoJSONFeatureCollection } from '../geojson';

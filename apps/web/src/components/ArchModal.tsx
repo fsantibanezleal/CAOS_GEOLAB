@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { ARCH_TABS } from '../lib/architecture-tabs';
 
-/** ADR-0058 — the in-app "How it works" modal: 5 themed-SVG tabs, each paired with a bilingual explanation. */
+/** ADR-0058, the in-app "How it works" modal: 5 themed-SVG tabs, each paired with a bilingual explanation. */
 export function ArchModal({ onClose }: { onClose: () => void }) {
   const { i18n } = useTranslation();
   const isEs = i18n.language === 'es';
@@ -20,7 +20,7 @@ export function ArchModal({ onClose }: { onClose: () => void }) {
     <div className="modal-wrap" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="arch-modal" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="modal-x" onClick={onClose} aria-label="Close"><X size={18} /></button>
-        <h2 style={{ marginBottom: '.6rem' }}>GeoLab — {isEs ? 'Cómo funciona' : 'How it works'}</h2>
+        <h2 style={{ marginBottom: '.6rem' }}>GeoLab, {isEs ? 'Cómo funciona' : 'How it works'}</h2>
 
         <div className="arch-tabs" role="tablist">
           {ARCH_TABS.map((t) => (

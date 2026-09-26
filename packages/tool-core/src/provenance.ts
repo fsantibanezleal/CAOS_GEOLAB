@@ -19,7 +19,7 @@ export function license(spdx: string): License {
   return { spdx, tier: TIER_BY_SPDX[spdx] ?? 'strong-copyleft' };
 }
 
-/** A strong-copyleft (GPL) tool must NOT be linked into the MIT core — keep it segregated/optional. */
+/** A strong-copyleft (GPL) tool must NOT be linked into the MIT core, keep it segregated/optional. */
 export function mustSegregate(p: Provenance): boolean {
   return p.license.tier === 'strong-copyleft';
 }

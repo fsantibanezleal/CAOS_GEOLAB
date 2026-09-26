@@ -1,5 +1,5 @@
 /**
- * Turf engine — loads the Turf.js tool catalog synchronously (no WASM, no lazy import).
+ * Turf engine: loads the Turf.js tool catalog synchronously (no WASM, no lazy import).
  * All 16 tools are pure-JS and run on the main thread via Tool.run().
  */
 

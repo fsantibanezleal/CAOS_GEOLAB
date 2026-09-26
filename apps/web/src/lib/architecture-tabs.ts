@@ -1,9 +1,9 @@
 /**
- * ADR-0058 — the in-app Architecture / "How it works" modal content for GeoLab.
+ * ADR-0058: the in-app Architecture / "How it works" modal content for GeoLab.
  * Five themed SVG diagrams (the app + design-build flow · lanes web/offline/compute · web-app flow ·
  * the science · data contracts), each a hand-laid-out SVG using ONLY the app's palette CSS-variable
  * tokens (zero hardcoded hex) and the shared `.arch-svg` class vocabulary in styles.css. The SVGs label
- * GeoLab's REAL modules in monospace and carry labeled flows + lanes — not boxes-and-arrows filler.
+ * GeoLab's REAL modules in monospace and carry labeled flows + lanes: not boxes-and-arrows filler.
  *
  * The SVG strings are inlined (dangerouslySetInnerHTML) so they inherit the theme variables live.
  */
@@ -42,18 +42,18 @@ const svg = (h: number, inner: string) =>
 // ── Tab 1 · The app + the design/build lifecycle ─────────────────────────────────────────────────────
 const SVG_APP = svg(
   348,
-  tc(440, 18, 'lane-ttl', 'GeoLab — a multi-engine, browser-native geospatial platform') +
-    // Band A — the app
-    band(12, 30, 856, 132, 'THE APP — what you use') +
+  tc(440, 18, 'lane-ttl', 'GeoLab, a multi-engine, browser-native geospatial platform') +
+    // Band A, the app
+    band(12, 30, 856, 132, 'THE APP, what you use') +
     card(24, 50, 256, 50, 'bx-hi', 'Workbench', [['cd', 'pages/Workbench.tsx']]) +
     card(312, 50, 256, 50, 'bx-hi', 'Pipeline editor', [['cd', 'pages/Pipeline.tsx']]) +
     card(600, 50, 256, 50, 'bx-hi', 'Tools catalog', [['cd', 'pages/Tools.tsx']]) +
     flow(152, 100, 350, 118) +
     flow(440, 100, 440, 118) +
     flow(728, 100, 530, 118) +
-    card(245, 118, 390, 36, 'bx', 'Tool Registry', [['cd', 'tool-core/registry.ts — catalog + provenance']]) +
-    // Band B — design/build lifecycle
-    band(12, 178, 856, 158, 'DESIGN & BUILD LIFECYCLE — how it was made') +
+    card(245, 118, 390, 36, 'bx', 'Tool Registry', [['cd', 'tool-core/registry.ts, catalog + provenance']]) +
+    // Band B, design/build lifecycle
+    band(12, 178, 856, 158, 'DESIGN & BUILD LIFECYCLE, how it was made') +
     card(24, 200, 152, 116, 'bx', '1 · Research', [
       ['cd', 'ADR-0059'],
       ['it', 'no-install,'],
@@ -93,21 +93,21 @@ const SVG_APP = svg(
     tc(692, 250, 'lbl', 'ship'),
 );
 
-// ── Tab 2 · Lanes — web / offline / compute (the core split) ─────────────────────────────────────────
+// ── Tab 2 · Lanes, web / offline / compute (the core split) ─────────────────────────────────────────
 const SVG_LANES = svg(
   432,
-  // Lane 1 — WEB
-  band(12, 22, 856, 158, 'LANE 1 · WEB — live, in your browser (all analysis runs here)') +
+  // Lane 1, WEB
+  band(12, 22, 856, 158, 'LANE 1 · WEB, live, in your browser (all analysis runs here)') +
     card(24, 44, 268, 110, 'bx-web', 'geolibre (WASM)', [
       ['cd', 'workers/geolibre-worker.ts'],
       ['cd', 'geolibre-cli.wasm · WASI'],
       ['it', '747 WhiteboxTools/GeoLibre'],
-      ['mu', 'Web Worker — UI responsive'],
+      ['mu', 'Web Worker, UI responsive'],
     ]) +
     card(306, 44, 268, 110, 'bx-web', 'Turf.js + H3 (Uber)', [
       ['cd', 'engines/turf.ts · h3.ts'],
       ['it', 'vector ops · hex indexing'],
-      ['mu', 'JavaScript — main thread'],
+      ['mu', 'JavaScript, main thread'],
     ]) +
     card(588, 44, 268, 110, 'bx-web', 'COG I/O + render', [
       ['cd', 'engines/geolibre-io.ts'],
@@ -115,8 +115,8 @@ const SVG_LANES = svg(
       ['it', 'read/write COG · MapLibre'],
       ['mu', 'Float32 grid · colormap'],
     ]) +
-    // Lane 2 — OFFLINE / COMPUTE
-    band(12, 196, 856, 110, 'LANE 2 · OFFLINE / COMPUTE — build-time only, never your data') +
+    // Lane 2, OFFLINE / COMPUTE
+    band(12, 196, 856, 110, 'LANE 2 · OFFLINE / COMPUTE, build-time only, never your data') +
     card(24, 218, 400, 78, 'bx-compute', 'Bake tool metadata', [
       ['cd', 'data-pipeline/whitebox/dump_params.py'],
       ['it', 'runs the Python whitebox package once'],
@@ -124,31 +124,31 @@ const SVG_LANES = svg(
     ]) +
     card(456, 218, 400, 78, 'bx-store', 'Baked artifact (committed)', [
       ['cd', 'adapters/geolibre/src/whitebox-params.json'],
-      ['it', '484 tools — fills 138 empty manifests'],
+      ['it', '484 tools, fills 138 empty manifests'],
       ['mu', 'shipped in the bundle, not fetched'],
     ]) +
     flow(424, 257, 456, 257) +
     tc(440, 249, 'lbl', 'JSON') +
-    // Lane 3 — REPRODUCIBILITY
-    band(12, 322, 856, 100, 'LANE 3 · REPRODUCIBILITY — the on-demand replay analogue') +
+    // Lane 3, REPRODUCIBILITY
+    band(12, 322, 856, 100, 'LANE 3 · REPRODUCIBILITY, the on-demand replay analogue') +
     card(24, 344, 400, 68, 'bx-hi', 'Recipe (pipeline DAG)', [
       ['cd', 'tool-core/types.ts → Recipe'],
       ['it', 'nodes + edges + pinned tool versions + input hashes'],
     ]) +
     card(456, 344, 400, 68, 'bx', 'Privacy guarantee', [
-      ['it', 'VirtualFS lives in memory only — no upload, no telemetry'],
+      ['it', 'VirtualFS lives in memory only, no upload, no telemetry'],
       ['mu', 'cleared on page reload'],
     ]),
 );
 
-// ── Tab 3 · Web-app flow — one tool run, end to end ──────────────────────────────────────────────────
+// ── Tab 3 · Web-app flow, one tool run, end to end ──────────────────────────────────────────────────
 const flowStep = (i: number, title: string, lines: Line[], cls = 'bx') => {
   const x = 15 + i * 144;
   return card(x, 60, 130, 150, cls, title, lines);
 };
 const SVG_WEBFLOW = svg(
   250,
-  tc(440, 22, 'lane-ttl', 'One tool run — data flows entirely inside the browser') +
+  tc(440, 22, 'lane-ttl', 'One tool run, data flows entirely inside the browser') +
     // worker boundary behind step 5
     `<rect x="${15 + 4 * 144 - 6}" y="44" width="142" height="182" rx="10" class="gate"/>` +
     tc(15 + 4 * 144 + 59, 40, 'lbl', 'Web Worker') +
@@ -170,7 +170,7 @@ const SVG_WEBFLOW = svg(
     tc(728, 127, 'lbl', 'bytes'),
 );
 
-// ── Tab 4 · The science — real geoprocessing methods + equations ─────────────────────────────────────
+// ── Tab 4 · The science, real geoprocessing methods + equations ─────────────────────────────────────
 const sciLane = (y: number, label: string, steps: string[], eq: string) => {
   let s = tx(24, y + 4, 'lane-ttl', label);
   const sy = y + 14;
@@ -185,7 +185,7 @@ const sciLane = (y: number, label: string, steps: string[], eq: string) => {
 };
 const SVG_SCIENCE = svg(
   336,
-  tc(440, 18, 'lane-ttl', 'The science — the real algorithms behind the tools') +
+  tc(440, 18, 'lane-ttl', 'The science, the real algorithms behind the tools') +
     sciLane(40, 'Terrain morphometry', ['DEM', 'slope', 'aspect'], 'S = atan √((∂z/∂x)² + (∂z/∂y)²)') +
     sciLane(116, 'Hydrology', ['fill_depr.', 'd8_pointer', 'flow_accum'], 'D8 single-flow direction → Σ upslope') +
     sciLane(192, 'Interpolation / geostats', ['points', 'idw', 'variogram'], 'ẑ = Σ wᵢzᵢ / Σ wᵢ ,  wᵢ = 1/dᵢᵖ') +
@@ -196,7 +196,7 @@ const SVG_SCIENCE = svg(
 const SVG_CONTRACTS = svg(
   360,
   // ingestion contract
-  band(12, 22, 856, 92, 'INGESTION CONTRACT — your data → the virtual filesystem') +
+  band(12, 22, 856, 92, 'INGESTION CONTRACT, your data → the virtual filesystem') +
     card(24, 42, 188, 60, 'bx', 'raster', [['cd', 'GeoTIFF / COG .tif']]) +
     card(220, 42, 188, 60, 'bx', 'vector', [['cd', 'GeoJSON .geojson']]) +
     card(416, 42, 188, 60, 'bx', 'pointcloud', [['cd', 'LAS 1.2 .las']]) +
@@ -205,14 +205,14 @@ const SVG_CONTRACTS = svg(
     flow(744, 72, 752, 72) +
     // tool contract
     band(12, 130, 420, 100, 'TOOL CONTRACT') +
-    card(24, 150, 396, 74, 'bx', 'Tool — tool-core/types.ts', [
+    card(24, 150, 396, 74, 'bx', 'Tool, tool-core/types.ts', [
       ['it', 'ParamSchema (typed) → auto-form'],
       ['it', 'inputs / outputs : PortKind'],
-      ['mu', 'Provenance — engine · license tier'],
+      ['mu', 'Provenance, engine · license tier'],
     ]) +
     // param synthesis contract
     band(448, 130, 420, 100, 'PARAM-SYNTHESIS CONTRACT (D1/D2)') +
-    card(460, 150, 396, 74, 'bx-compute', 'effectiveParams() — adapters/geolibre', [
+    card(460, 150, 396, 74, 'bx-compute', 'effectiveParams(), adapters/geolibre', [
       ['it', 'synthesizeParams · reclassifyStringFile'],
       ['it', 'reclassifyField → field selector'],
       ['mu', 'enriched by whitebox-params.json'],
@@ -246,9 +246,9 @@ export const ARCH_TABS: ArchTab[] = [
     es: 'La app',
     svg: SVG_APP,
     body_en:
-      'GeoLab is a multi-engine geospatial platform that runs entirely in your browser. Three surfaces — Workbench, Pipeline editor and Tools catalog — sit on a unified Tool Registry. It was built by baking tool metadata offline, mapping each engine through a standard adapter, then bundling a static SPA deployed to GitHub Pages with no backend.',
+      'GeoLab is a multi-engine geospatial platform that runs entirely in your browser. Three surfaces, Workbench, Pipeline editor and Tools catalog, sit on a unified Tool Registry. It was built by baking tool metadata offline, mapping each engine through a standard adapter, then bundling a static SPA deployed to GitHub Pages with no backend.',
     body_es:
-      'GeoLab es una plataforma geoespacial multi-motor que corre completa en tu navegador. Tres superficies — Banco de trabajo, Editor de Pipeline y Catálogo de herramientas — se apoyan en un Registro de Herramientas unificado. Se construyó horneando la metadata de las herramientas offline, mapeando cada motor con un adaptador estándar y empaquetando una SPA estática desplegada en GitHub Pages, sin backend.',
+      'GeoLab es una plataforma geoespacial multi-motor que corre completa en tu navegador. Tres superficies, Banco de trabajo, Editor de Pipeline y Catálogo de herramientas, se apoyan en un Registro de Herramientas unificado. Se construyó horneando la metadata de las herramientas offline, mapeando cada motor con un adaptador estándar y empaquetando una SPA estática desplegada en GitHub Pages, sin backend.',
   },
   {
     id: 'lanes',
@@ -256,9 +256,9 @@ export const ARCH_TABS: ArchTab[] = [
     es: 'Carriles',
     svg: SVG_LANES,
     body_en:
-      'What runs WHERE — the core split. The WEB lane runs every analysis live in the browser: geolibre as WASM in a Web Worker, Turf/H3 on the main thread, COG I/O and MapLibre rendering. The OFFLINE/COMPUTE lane runs only at build time (the Python whitebox bake that produces whitebox-params.json) and never touches your data. The third lane is reproducibility: a Recipe re-runs an analysis exactly, the on-demand analogue of a deterministic replay.',
+      'What runs WHERE, the core split. The WEB lane runs every analysis live in the browser: geolibre as WASM in a Web Worker, Turf/H3 on the main thread, COG I/O and MapLibre rendering. The OFFLINE/COMPUTE lane runs only at build time (the Python whitebox bake that produces whitebox-params.json) and never touches your data. The third lane is reproducibility: a Recipe re-runs an analysis exactly, the on-demand analogue of a deterministic replay.',
     body_es:
-      'Qué corre DÓNDE — la división central. El carril WEB ejecuta todo el análisis en vivo en el navegador: geolibre como WASM en un Web Worker, Turf/H3 en el hilo principal, I/O de COG y renderizado MapLibre. El carril OFFLINE/COMPUTE corre solo en build (el horneado Python whitebox que produce whitebox-params.json) y nunca toca tus datos. El tercer carril es reproducibilidad: una Receta re-ejecuta un análisis exactamente, el análogo on-demand de un replay determinista.',
+      'Qué corre DÓNDE, la división central. El carril WEB ejecuta todo el análisis en vivo en el navegador: geolibre como WASM en un Web Worker, Turf/H3 en el hilo principal, I/O de COG y renderizado MapLibre. El carril OFFLINE/COMPUTE corre solo en build (el horneado Python whitebox que produce whitebox-params.json) y nunca toca tus datos. El tercer carril es reproducibilidad: una Receta re-ejecuta un análisis exactamente, el análogo on-demand de un replay determinista.',
   },
   {
     id: 'webflow',

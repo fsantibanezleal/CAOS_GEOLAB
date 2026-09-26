@@ -42,7 +42,7 @@ export function topologicalOrder(pipeline: Pipeline): string[] {
     }
   }
   if (order.length !== pipeline.nodes.length) {
-    throw new Error('GeoLab: pipeline has a cycle — a pipeline must be a DAG.');
+    throw new Error('GeoLab: pipeline has a cycle, a pipeline must be a DAG.');
   }
   return order;
 }

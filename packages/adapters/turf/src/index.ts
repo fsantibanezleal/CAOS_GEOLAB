@@ -1,9 +1,9 @@
 /**
- * Turf.js adapter — maps 16 MIT-licensed Turf.js v7 vector-analysis functions into GeoLab Tool objects.
+ * Turf.js adapter: maps 16 MIT-licensed Turf.js v7 vector-analysis functions into GeoLab Tool objects.
  *
  * Every tool runs on the MAIN THREAD (pure-JS, no WASM). The `run()` method receives a ToolRunContext,
  * reads input bytes from the virtual FS, calls the Turf function, serialises the GeoJSON result, and
- * writes it back. No worker, no heavy init — just instant vector math.
+ * writes it back. No worker, no heavy init: just instant vector math.
  *
  * Tool IDs follow the pattern `turf:<function-name>` to avoid collisions with the geolibre namespace.
  */
@@ -203,7 +203,7 @@ export function buildTurfTools(): Tool[] {
       async run(ctx: ToolRunContext, params: Record<string, unknown>): Promise<ToolRunResult> {
         const fc = await readLayer(ctx, params['layer']);
         const env = turf.envelope(fc);
-        if (!env) throw new Error('Could not compute envelope — empty feature collection?');
+        if (!env) throw new Error('Could not compute envelope, empty feature collection?');
         return vectorOutput(ctx, 'envelope', turf.featureCollection([env]));
       },
     },
@@ -225,7 +225,7 @@ export function buildTurfTools(): Tool[] {
       async run(ctx: ToolRunContext, params: Record<string, unknown>): Promise<ToolRunResult> {
         const fc = await readLayer(ctx, params['layer']);
         const hull = turf.convex(fc);
-        if (!hull) throw new Error('Could not compute convex hull — fewer than 3 points?');
+        if (!hull) throw new Error('Could not compute convex hull, fewer than 3 points?');
         return vectorOutput(ctx, 'convex', turf.featureCollection([hull]));
       },
     },
@@ -534,7 +534,7 @@ export function buildTurfTools(): Tool[] {
             if (diff) results.push(diff);
           }
         }
-        if (results.length === 0) throw new Error('Difference produced no output — B may fully cover A.');
+        if (results.length === 0) throw new Error('Difference produced no output, B may fully cover A.');
         return vectorOutput(ctx, 'difference', turf.featureCollection(results));
       },
     },

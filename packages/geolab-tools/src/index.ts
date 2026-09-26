@@ -3,9 +3,9 @@
  *
  * v0.01.000 ships the helper + the cross-engine-compare *factory* (a real composition, not a stub): given
  * two tools that compute the same quantity through different engines, it runs both and reports the
- * difference — GeoLab's signature didactic feature. Domain/ONNX/uncertainty tools land next.
+ * difference: GeoLab's signature didactic feature. Domain/ONNX/uncertainty tools land next.
  *
- * We do NOT register placeholder/fake tools — a tool appears only once it genuinely runs.
+ * We do NOT register placeholder/fake tools: a tool appears only once it genuinely runs.
  */
 import { ENGINES, type Tool } from '@geolab/tool-core';
 
@@ -21,7 +21,7 @@ export function defineGeolabTool(
 }
 
 /**
- * Planned own-tools (roadmap — implemented as engines are wired):
+ * Planned own-tools (roadmap: implemented as engines are wired):
  *  - workflow:watershed         fill → D8 flow-dir → flow-accum → threshold → Strahler  (composite)
  *  - workflow:chm-from-lidar    ground filter → DEM → DSM → CHM                          (composite)
  *  - compare:slope              whitebox slope  vs  gdaldem slope  → diff + stats        (cross-engine)

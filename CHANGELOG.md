@@ -3,6 +3,12 @@
 All notable changes to GeoLab. Format: `X.XX.XXX` (per CAOS versioning); 0.x while on the bootstrap /
 pre-first-tool phase. Newest on top.
 
+## [0.18.001] · 2026-09-26
+
+### Changed
+
+- No em-dash in the product's content (ADR-0067); the archetype's content guard runs in CI.
+
 ## [0.18.000] · 2026-07-03
 ### Added
 - D5: catalog tabs + pagination + a per-tool detail modal.
@@ -15,16 +21,16 @@ pre-first-tool phase. Newest on top.
 ### Added
 - D3: dozens of synthetic samples across every tool category (workbench).
 
-## [0.15.000] — 2026-06-23
+## [0.15.000]: 2026-06-23
 
-### Added — D4: download tool outputs
+### Added: D4: download tool outputs
 - Every workspace layer (sample, upload, or tool output) now has a **Download** button (↓) in the Layers
   panel → saves the real file (raster `.tif` / vector `.geojson` / text) with the correct name + MIME type.
 - Verified (headless): running Aspect → its output layer downloads as `aspect_output.tif`, 0 console errors.
 
-## [0.14.000] — 2026-06-23
+## [0.14.000]: 2026-06-23
 
-### Fixed — the 138 broken tools (D1 + D2)
+### Fixed: the 138 broken tools (D1 + D2)
 - **138 of 747 geolibre tools shipped EMPTY params** in the manifest (blank forms; runs failed "missing
   required parameter 'input'"). Now FILLED from the authoritative WhiteboxTools metadata
   (`packages/adapters/geolibre/src/whitebox-params.json`, baked offline via `data-pipeline/whitebox/`).
@@ -42,28 +48,28 @@ pre-first-tool phase. Newest on top.
 ### Tooling
 - `data-pipeline/whitebox/dump_params.py` (offline `.venv`) dumps WhiteboxTools params → the committed JSON.
 
-## [0.13.000] — 2026-06-23
+## [0.13.000]: 2026-06-23
 
-### Added — ⓘ Architecture modal (ADR-0058: 4-tab themed SVG explainer)
+### Added: ⓘ Architecture modal (ADR-0058: 4-tab themed SVG explainer)
 
-- **`ArchModal` component** (`apps/web/src/components/ArchModal.tsx`) — replaces the scaffold
+- **`ArchModal` component** (`apps/web/src/components/ArchModal.tsx`): replaces the scaffold
   placeholder in the header ⓘ button with a full 4-tab architecture explainer (ADR-0058).
-- **Tab 1 — Architecture**: SVG diagram of the full platform stack inside a browser boundary:
+- **Tab 1: Architecture**: SVG diagram of the full platform stack inside a browser boundary:
   Workbench + Pipeline Editor → Tool Registry → geolibre (WASM/Worker) · Turf.js (JS) ·
   H3 (JS) · planned engines (GDAL · GEOS · mapshaper · libvips · ITK-Wasm); Your Files box
   showing data flow without upload.
-- **Tab 2 — Engines**: visual card grid for the 3 wired engines (geolibre · Turf.js · H3)
+- **Tab 2: Engines**: visual card grid for the 3 wired engines (geolibre · Turf.js · H3)
   with name, upstream project, license chip, active status chip, and tool count; planned-engines
   pill list; adapter-interface SVG showing how Tool Registry fans out to each adapter.
-- **Tab 3 — Data Flow**: 6-step horizontal flow diagram (Your file → Virtual FS → Adapter →
+- **Tab 3: Data Flow**: 6-step horizontal flow diagram (Your file → Virtual FS → Adapter →
   Engine → Output → New layer) with step icons; technical detail rows for WASM vs JS paths and
   raster vs vector render paths.
-- **Tab 4 — Privacy**: SVG diagram with browser boundary containing data (in memory) + engines +
+- **Tab 4: Privacy**: SVG diagram with browser boundary containing data (in memory) + engines +
   output layers; "No server" zone (dashed red box) showing what is NOT sent; explicit list of
   what IS sent (npm CDN for WASM on first load; map tile requests with view coords only; no
   analytics, no cookies). Privacy guarantee callout.
 - All diagrams use CSS custom properties (`var(--fg)`, `var(--accent)`, `var(--border)`, etc.)
-  via SVG `style` attributes — full light/dark theme support with zero JS overhead.
+  via SVG `style` attributes, full light/dark theme support with zero JS overhead.
 - **Bilingual (EN/ES)**: all tab labels, descriptions, and SVG text respect the UI language.
 - **CSS additions** (`.arch-modal`, `.arch-tabs`, `.arch-tab`, `.arch-body`, `.arch-desc`,
   `.arch-engine-grid`, `.arch-engine-card`, `.arch-planned-*`, `.arch-flow-*`, `.arch-privacy-note`).
@@ -73,11 +79,11 @@ pre-first-tool phase. Newest on top.
 - `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (2111 modules, 21.7 s).
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 
-## [0.12.000] — 2026-06-23
+## [0.12.000]: 2026-06-23
 
-### Added — H3 adapter (third engine, 8 hexagonal-grid tools)
+### Added: H3 adapter (third engine, 8 hexagonal-grid tools)
 
-- **`@geolab/adapter-h3`** (`packages/adapters/h3/`) — new workspace package wrapping 8 Uber H3
+- **`@geolab/adapter-h3`** (`packages/adapters/h3/`): new workspace package wrapping 8 Uber H3
   (h3-js v4) hexagonal-grid functions as GeoLab `Tool` objects. Runs entirely on the **main thread**
   (pure-JS, no WASM, no Web Worker): zero startup delay.
 - **8 tools registered** across two categories:
@@ -96,11 +102,11 @@ pre-first-tool phase. Newest on top.
 - `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green.
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 
-## [0.11.000] — 2026-06-23
+## [0.11.000]: 2026-06-23
 
-### Added — Turf.js adapter (second engine)
+### Added: Turf.js adapter (second engine)
 
-- **`@geolab/adapter-turf`** (`packages/adapters/turf/`) — new workspace package wrapping 16 Turf.js
+- **`@geolab/adapter-turf`** (`packages/adapters/turf/`): new workspace package wrapping 16 Turf.js
   v7 vector-analysis functions as GeoLab `Tool` objects. Runs entirely on the **main thread** (no
   WASM, no Web Worker): pure-JS, zero startup delay.
 - **16 tools registered** across three categories:
@@ -110,22 +116,22 @@ pre-first-tool phase. Newest on top.
   - *Transformations*: `turf:buffer`, `turf:simplify`, `turf:dissolve`, `turf:transform-rotate`,
     `turf:transform-scale`, `turf:transform-translate`
   - *Set operations*: `turf:union`, `turf:intersect`, `turf:difference` (two-layer)
-- **Multi-engine execution model** in Workbench and Pipeline: branch on engine type — geolibre WASM
+- **Multi-engine execution model** in Workbench and Pipeline: branch on engine type: geolibre WASM
   tools continue to run via the existing Web Worker path; Turf tools execute with `tool.run(ctx,
   params)` directly on the main thread. Engine chips in the UI show "Turf.js" for turf tools.
 - **`apps/web/src/engines/turf.ts`**: lazy singleton that builds Turf tools once on first use.
 - **`apps/web/src/lib/engines.ts`**: geolibre and turf status both updated to `'wired'`.
 - Engines panel in the Toolbox now shows both geolibre and turf as active engines.
 
-## [0.10.000] — 2026-06-23
+## [0.10.000]: 2026-06-23
 
-### Added — Pipeline node editor (React Flow)
+### Added: Pipeline node editor (React Flow)
 
 - **Pipeline page** (`/pipeline` route) added to the navigation alongside Workbench / Tools / Credits.
 - **React Flow canvas** (`@xyflow/react ^12`): an interactive DAG editor where each node is a geolibre
   tool. Nodes are draggable; handles on left (input) and right (output) can be connected by dragging.
   Deleting a selected node with the Delete key removes it and its edges.
-- **Tool sidebar**: a searchable mini-toolbox (up to 80 results shown, refine-search hint) — clicking
+- **Tool sidebar**: a searchable mini-toolbox (up to 80 results shown, refine-search hint): clicking
   any tool adds it as a new node on the canvas at a staggered position.
 - **Node configuration panel** (right): clicking a node shows the tool's name, engine chip, summary,
   and an inline param form (number/integer/boolean/string/enum/layer inputs; output specs hidden).
@@ -148,9 +154,9 @@ pre-first-tool phase. Newest on top.
 - `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green (1818 modules, 14.7 s).
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 
-## [0.09.000] — 2026-06-23
+## [0.09.000]: 2026-06-23
 
-### Added — GeoJSON upload (bring-your-own vector layer)
+### Added: GeoJSON upload (bring-your-own vector layer)
 
 - **GeoJSON upload**: the "Upload layer" toolbar button now accepts both `.tif/.tiff` (raster) and
   `.geojson/.json` (vector). The file type is detected by extension; GeoJSON files go through
@@ -164,7 +170,7 @@ pre-first-tool phase. Newest on top.
 - **Vector layer as tool input**: `defaultsFor()` now accepts a `vectorLayerId` argument and
   pre-fills tool parameters of `type: 'layer', accepts: ['vector']` with the first available vector
   layer (or the active layer if it is a vector). `selectTool()` passes `firstVectorId()` to it.
-  `collectRunArgs()` already handled vector layers via `bytesRef` — no adapter changes needed.
+  `collectRunArgs()` already handled vector layers via `bytesRef`, no adapter changes needed.
 - **firstVectorId helper**: mirrors `firstRasterId()`, finds the first vector layer in the workspace
   (preferring the active layer if it matches).
 - **i18n**: `wb.upload` → "Upload layer" / "Subir capa"; `wb.toolboxHint` + `wb.intro` + `layers.none`
@@ -173,21 +179,21 @@ pre-first-tool phase. Newest on top.
 - `pnpm -C apps/web typecheck` clean; `pnpm -C apps/web build` green.
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 
-## [0.08.000] — 2026-06-23
+## [0.08.000]: 2026-06-23
 
-### Added — render non-raster tool outputs
+### Added: render non-raster tool outputs
 
 - **Vector output rendering**: when a tool produces a `.geojson` output (`kind: 'vector'`), the bytes are
   decoded as UTF-8, parsed with `parseGeoJSON()`, and added to the workspace as a vector layer. The Map
-  view renders it as three MapLibre GL layers — fill (Polygon/MultiPolygon), line (LineString + outline),
-  and circle (Point/MultiPoint) — all in the GeoLab accent colour.
+  view renders it as three MapLibre GL layers, fill (Polygon/MultiPolygon), line (LineString + outline),
+  and circle (Point/MultiPoint), all in the GeoLab accent colour.
 - **Auto-bounds**: `geojsonBbox()` in `lib/geojson.ts` computes `[minLon, minLat, maxLon, maxLat]` from
   the feature coordinates so `fitBounds()` zooms the map to the result automatically.
 - **Auto-switch to Map**: when the active layer changes to `kind: 'vector'`, the workbench center panel
   automatically switches from Grid to Map mode; the Grid tab becomes disabled with a tooltip.
 - **Text / table output panel**: tools that produce `text`, `table`, or `pointcloud` outputs have their
   bytes decoded as UTF-8 and shown in a `TextOutputPanel` (scrollable monospace pre block, max 340 px).
-  The Grid/Map toggle is hidden — neither applies to non-spatial text.
+  The Grid/Map toggle is hidden, neither applies to non-spatial text.
 - **Pointcloud info hint**: when the output is a binary LiDAR file (`kind: 'pointcloud'`), the panel adds
   a notice explaining the file is binary and directs the user to the tool log for statistics.
 - **Vector feature summary in log**: after a vector run, the log line `vector output: N features (type…)`
@@ -202,12 +208,12 @@ pre-first-tool phase. Newest on top.
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 - Merged via **PR #12** → develop.
 
-## [0.07.000] — 2026-06-23
+## [0.07.000]: 2026-06-23
 
-### Added — Refined auto-forms
+### Added: Refined auto-forms
 
 - **Output-only schema detection**: tools whose entire parameter schema consists only of output specs
-  (no input parameters) now render a clear "No input parameters required — click Run to proceed"
+  (no input parameters) now render a clear "No input parameters required, click Run to proceed"
   affordance instead of a silent empty form.
 - **Number/integer widgets**: `min`, `max`, and `step` constraints from `ParamSpec` are now passed to
   the `<input type="number">` element, preventing out-of-range values at the browser level.
@@ -218,10 +224,10 @@ pre-first-tool phase. Newest on top.
   instead of a single-line text input.
 - **File widget** (`type: 'file'`): replaces the "coming" placeholder with an `<input type="file">` that
   reads the file bytes asynchronously (via `arrayBuffer()`) and stores `{ name, bytes }` in the params
-  state. `collectRunArgs` in `@geolab/adapter-geolibre` now handles these file-value objects — adds the
+  state. `collectRunArgs` in `@geolab/adapter-geolibre` now handles these file-value objects, adds the
   bytes to the input map and emits the correct `--param=/work/<name>` CLI argument.
 - **Layer availability hint**: when a `type: 'layer'` param requires a layer kind that has no matching
-  layers in the workspace (e.g. vector or pointcloud), the widget shows "No [kind] layers — generate or
+  layers in the workspace (e.g. vector or pointcloud), the widget shows "No [kind] layers, generate or
   upload one first" instead of an empty/confusing dropdown.
 - **Optional param label**: optional (non-required) parameters now show an `(optional)` label suffix,
   making required vs optional fields immediately clear.
@@ -232,11 +238,11 @@ pre-first-tool phase. Newest on top.
   file-like values (`{name, bytes}` → added to the input map with a `/work/<name>` path arg).
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 
-## [0.06.001] — 2026-06-23
+## [0.06.001]: 2026-06-23
 
 ### Fixed
 - **MapLibre basemap now renders.** v0.06.000 added a `coi-serviceworker` (COEP `require-corp`) that
-  cross-origin-isolated the page and **blocked the cross-origin basemap tiles** — and nothing in GeoLab
+  cross-origin-isolated the page and **blocked the cross-origin basemap tiles**, and nothing in GeoLab
   needs cross-origin isolation (the geolibre WASI engine is single-threaded; it ran fine without COI in
   v0.02–v0.04). Removed the COI serviceworker and switched the basemap to an **OSM raster** style.
   Screenshot-verified (headless): OSM tiles load (HTTP 200), `crossOriginIsolated=false`, the georeferenced
@@ -247,9 +253,9 @@ pre-first-tool phase. Newest on top.
   (`geolab.fasl-work.com`). Inert until the repo is made public + Pages is enabled (go-live runbook in
   CAOS_MANAGE `deployments/geolab.md`).
 
-## [0.06.000] — 2026-06-23
+## [0.06.000]: 2026-06-23
 
-### Added — MapLibre basemap + COI serviceworker
+### Added: MapLibre basemap + COI serviceworker
 - **MapLibre GL JS basemap**: raster layers are now viewable as georeferenced overlays on an interactive
   world basemap (MapLibre GL JS v5 + `demotiles.maplibre.org` style, no API key required).
 - **Grid / Map toggle** in the workbench center panel: switch between the pixel-grid canvas view
@@ -258,20 +264,20 @@ pre-first-tool phase. Newest on top.
   WGS84 geographic extent of any GeoTIFF/COG directly, without proj4 or a separate reprojection step.
   The bounds are read for synthetic DEMs, uploaded files, and all tool outputs.
 - **`coi-serviceworker`**: installs a service worker that adds `Cross-Origin-Opener-Policy: same-origin`
-  and `Cross-Origin-Embedder-Policy: require-corp` headers — required for `SharedArrayBuffer` (WASM
+  and `Cross-Origin-Embedder-Policy: require-corp` headers, required for `SharedArrayBuffer` (WASM
   threads) to work on GitHub Pages and other hosted environments.
 - No browser in cloud env → screenshot **skipped** (stated explicitly).
 
-## [0.05.000] — 2026-06-23
+## [0.05.000]: 2026-06-23
 
-### Added — Web Worker runner (off-main-thread WASM execution)
+### Added: Web Worker runner (off-main-thread WASM execution)
 - Tool runs are now **off the main thread**: a dedicated Web Worker loads the geolibre-wasm engine once
   and handles all `runTool()` calls, so the browser UI stays fully responsive during the (sometimes
   multi-second) WASM computation.
 - A **progress bar** (fraction 0→1 + status message) appears in the right panel while a tool runs.
 - A **Cancel button** aborts the pending result (the current WASM call completes inside the worker but
   the output is discarded; the UI returns to idle immediately).
-- The worker is a module-level singleton — it lives across Workbench re-renders and warms up on the
+- The worker is a module-level singleton: it lives across Workbench re-renders and warms up on the
   first run (the engine loads once, subsequent runs skip the 22 MB WASM load).
 - New: `src/workers/geolibre-worker.ts` (the worker); `src/lib/useWorkerRunner.ts` (the React hook).
 - Adapter: `collectRunArgs()` and `guessOutputKind()` exported as standalone helpers so the main thread
@@ -279,21 +285,21 @@ pre-first-tool phase. Newest on top.
 - Engine loader: `getGeolibreManifest(toolId)` exported from `src/engines/geolibre.ts` (returns the
   raw geolibre manifest for a given GeoLab tool id, from the in-memory manifest cache).
 
-## [0.04.001] — 2026-06-22
+## [0.04.001]: 2026-06-22
 
 ### Added
-- A **colorbar legend** under each raster canvas — the active colormap as a gradient + min / mid / max
-  labels (with units) — so the colormap is readable.
+- A **colorbar legend** under each raster canvas: the active colormap as a gradient + min / mid / max
+  labels (with units), so the colormap is readable.
 
-## [0.04.000] — 2026-06-22
+## [0.04.000]: 2026-06-22
 
-### Added — the generic workbench (run ANY of the 747 tools)
+### Added: the generic workbench (run ANY of the 747 tools)
 - Replaced the slope-only demo with a real **3-column workbench**: a **Toolbox** (all 747 tools, by
   category, searchable) → pick any → its **auto-form** (from the ParamSchema) → **Run** on the active layer;
   a **Layers** panel (sample DEM, uploads, tool outputs) with click-to-render + remove; and a canvas that
   renders the active raster layer with a **colormap selector** (viridis / terrain / gray) + value read-out
   at the cursor.
-- **Bring-your-own GeoTIFF** — upload a raster (read with geolibre's reader) and it becomes a layer you can
+- **Bring-your-own GeoTIFF**: upload a raster (read with geolibre's reader) and it becomes a layer you can
   run tools on. Your data never leaves the browser.
 - Tool outputs become new raster layers, with provenance/lineage (`producedBy`).
 - New components: `Toolbox`, `LayersPanel`; the Workbench is now a workspace (InMemoryFS + layers + tools).
@@ -301,19 +307,19 @@ pre-first-tool phase. Newest on top.
   2 layers, the result renders correctly, `exit 0`, 0 console errors, light + dark.
 
 ### Known / next
-- Some tools with implicit/all-output params render a minimal auto-form (they still run from defaults) — to
+- Some tools with implicit/all-output params render a minimal auto-form (they still run from defaults): to
   refine. A **Web-Worker** runner (off-main-thread + progress/cancel) and a **MapLibre** basemap (georef
   overlay) are the next increments.
 
-## [0.03.000] — 2026-06-22
+## [0.03.000]: 2026-06-22
 
-### Added — first real analysis, end-to-end, in the browser
-- The **Workbench runs a real WhiteboxTools tool — Slope — entirely client-side**: generate a synthetic
+### Added: first real analysis, end-to-end, in the browser
+- The **Workbench runs a real WhiteboxTools tool: Slope, entirely client-side**: generate a synthetic
   georeferenced DEM, auto-form the tool's params (input layer / units / z_factor) from its ParamSchema, run
   it via the WASM engine, and render the COG result on an interactive canvas (colormap + value read-out at
   the cursor) with the tool's provenance chip and run log.
-- New pieces: `tool-core` **InMemoryFS**; **RasterCanvas** (colormap + hover read-out — the interactivity
-  rubric); **ParamForm** (auto-form generated from a ParamSchema — the QGIS-Processing pattern); `colormap`
+- New pieces: `tool-core` **InMemoryFS**; **RasterCanvas** (colormap + hover read-out: the interactivity
+  rubric); **ParamForm** (auto-form generated from a ParamSchema, the QGIS-Processing pattern); `colormap`
   (TERRAIN / VIRIDIS); a synthetic-DEM generator.
 - **All raster I/O goes through geolibre's OWN browser lib** (`CogBuilder.write_f32` +
   `geotiff_read_band_f64`). geotiff.js mis-encodes/mis-decodes geolibre's tiled COGs (confirmed by probing:
@@ -323,18 +329,18 @@ pre-first-tool phase. Newest on top.
   high-slope rings around the hill flanks), `exit 0`, 0 console errors, light + dark.
 
 ### Changed
-- Dropped the `geotiff` dependency — replaced entirely by geolibre's reader/writer.
+- Dropped the `geotiff` dependency: replaced entirely by geolibre's reader/writer.
 
-## [0.02.000] — 2026-06-22
+## [0.02.000]: 2026-06-22
 
-### Added — the real geolibre engine, live in the browser
+### Added: the real geolibre engine, live in the browser
 - `adapters/geolibre` rewritten against the **real** `geolibre-wasm@0.4.4` API (verified by probing the
   package): `listManifests()` + the actual param schema `{ name, data_kind, io_role, required, schema }` +
   `runTool() → { exitCode, stdout, files }`. **747 tools** across Conversion / Hydrology / Lidar / Other /
   Raster / Terrain / Vector; provenance distinguishes WhiteboxTools vs GeoLibre-authored.
 - `apps/web` **Tools** page: lazily loads the ~22 MB WASM engine **in the browser** and lists all 747 tools
   grouped by category, searchable, each with a provenance + license chip.
-- Vite **code-splits** the engine — `geolibre-cli.wasm` (17.6 MB) + the Tools chunk load on demand, never on
+- Vite **code-splits** the engine: `geolibre-cli.wasm` (17.6 MB) + the Tools chunk load on demand, never on
   first paint.
 - **Screenshot-verified** in headless Chromium: engine loads, `LOADED_TOOL_COUNT 747`, 0 console errors,
   light + dark.
@@ -343,12 +349,12 @@ pre-first-tool phase. Newest on top.
 - The `run()` path (engine → in-memory `/work` → COG output) is implemented in the adapter; the in-app
   **run + map render** (sample DEM → slope → MapLibre/canvas) is the next increment.
 
-## [0.01.000] — 2026-06-22
+## [0.01.000]: 2026-06-22
 
-### Added — bootstrap / scaffolding (ADR-0059)
+### Added: bootstrap / scaffolding (ADR-0059)
 - Monorepo skeleton (pnpm workspace): `apps/web`, `packages/tool-core`, `packages/adapters/*`,
   `packages/geolab-tools`, `data-pipeline/`, `docs/`.
-- `tool-core`: the engine-agnostic abstractions — `Tool`, `Layer`, `Pipeline`, `Project`, `ParamSchema`,
+- `tool-core`: the engine-agnostic abstractions: `Tool`, `Layer`, `Pipeline`, `Project`, `ParamSchema`,
   `Provenance`/`License`, a `ToolRegistry`, and a worker-runner interface.
 - `adapters/geolibre`: scaffold that maps `geolibre-wasm` tools into the `Tool` registry with provenance.
 - `geolab-tools`: scaffold for our own tools (composite + cross-engine compare).

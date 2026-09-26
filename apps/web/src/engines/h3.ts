@@ -1,5 +1,5 @@
 /**
- * H3 engine — loads the H3 tool catalog synchronously (pure JS, no WASM).
+ * H3 engine: loads the H3 tool catalog synchronously (pure JS, no WASM).
  * All 8 tools run on the main thread via Tool.run().
  */
 
