@@ -153,7 +153,7 @@ export function Workbench() {
       } else if (res.kind === 'table') {
         wl.textContent = new TextDecoder().decode(res.bytes);
       } else if (res.kind === 'pointcloud') {
-        wl.textContent = `Binary LiDAR (LAS) — ${res.bytes.length} bytes. Run "lidar_info" or an interpolation tool to inspect it.`;
+        wl.textContent = `Binary LiDAR (LAS), ${res.bytes.length} bytes. Run "lidar_info" or an interpolation tool to inspect it.`;
       }
       addLayer(wl);
       await ensureEngines();
@@ -180,7 +180,7 @@ export function Workbench() {
       addLayer({ layer: { id, name: file.name, kind: 'raster', format: 'GeoTIFF', bytesRef: ref }, grid, cmap: 'viridis', lonLatBbox: lonLatBbox ?? undefined });
       await ensureEngines();
     } catch (e) {
-      setError(`${file.name}: ${e instanceof Error ? e.message : String(e)} — is it a single-band GeoTIFF raster?`);
+      setError(`${file.name}: ${e instanceof Error ? e.message : String(e)}, is it a single-band GeoTIFF raster?`);
     }
   }
 
@@ -203,7 +203,7 @@ export function Workbench() {
       setLog([`Loaded: ${count} features (${types.join(', ')})`]);
       await ensureEngines();
     } catch (e) {
-      setError(`${file.name}: ${e instanceof Error ? e.message : String(e)} — is it a valid GeoJSON file?`);
+      setError(`${file.name}: ${e instanceof Error ? e.message : String(e)}, is it a valid GeoJSON file?`);
     }
   }
 
@@ -250,7 +250,7 @@ export function Workbench() {
           const { count, types } = geojsonSummary(geojson);
           setLog((prev) => [`vector output: ${count} features (${types.join(', ')})`, ...prev]);
         } catch {
-          setLog((prev) => [`vector output "${out.name}" — could not parse as GeoJSON`, ...prev]);
+          setLog((prev) => [`vector output "${out.name}", could not parse as GeoJSON`, ...prev]);
         }
         const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: 'vector', format: 'GeoJSON', bytesRef: ref, producedBy: [tool.provenance], fields: geojson ? geojsonFields(geojson) : undefined };
         setWlayers((prev) => [{ layer, cmap: 'viridis', geojson, geoBbox }, ...prev]);
@@ -260,7 +260,7 @@ export function Workbench() {
         const ref = `data/${id}.txt`;
         await fsRef.current.write(ref, out.bytes);
         let textContent = '';
-        try { textContent = new TextDecoder().decode(out.bytes); } catch { textContent = `(binary ${out.kind} output — ${out.bytes.length} bytes)`; }
+        try { textContent = new TextDecoder().decode(out.bytes); } catch { textContent = `(binary ${out.kind} output, ${out.bytes.length} bytes)`; }
         const layer: Layer = { id, name: `${tool.name} · ${out.name}`, kind: out.kind, format: out.format, bytesRef: ref, producedBy: [tool.provenance] };
         setWlayers((prev) => [{ layer, cmap: 'viridis', textContent }, ...prev]);
         if (!firstOut) firstOut = id;

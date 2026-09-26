@@ -1,5 +1,5 @@
 /**
- * geolibre-wasm adapter — maps the **747** real WhiteboxTools+GeoLibre tools into GeoLab `Tool`s, with
+ * geolibre-wasm adapter: maps the **747** real WhiteboxTools+GeoLibre tools into GeoLab `Tool`s, with
  * provenance. Written against the REAL `geolibre-wasm@0.4.4` API (verified by probing the package):
  *
  *   import * as engine from "geolibre-wasm/tools";
@@ -238,7 +238,7 @@ export async function collectRunArgs(
 // geolibre-wasm@0.4.4 ships 138/747 tools with EMPTY params (blank forms; runs fail "missing required
 // parameter 'input'"). We fill them from the authoritative WhiteboxTools metadata (whitebox-params.json,
 // baked offline in data-pipeline/whitebox/). geolibre RENAMED flags vs standard WBT (it uses --input not
-// --dem, --target_size not --size), so we do NOT use WBT's flags — we synthesize geolibre-native names
+// --dem, --target_size not --size), so we do NOT use WBT's flags, we synthesize geolibre-native names
 // (--input/--output + the manifest's own `defaults` keys) and use WBT only for the input KIND, enum OPTIONS
 // and param TYPES (which don't drift). See wip/geolab/remediation/01-whitebox-params-and-docs.md.
 import WBT from './whitebox-params.json';
@@ -259,7 +259,7 @@ interface WbtTool {
 }
 const WBT_TOOLS = (WBT as { tools: Record<string, WbtTool> }).tools;
 
-/** Authoritative WhiteboxTools documentation for a tool (genuine descriptions — drives the per-tool detail modal). */
+/** Authoritative WhiteboxTools documentation for a tool (genuine descriptions, drives the per-tool detail modal). */
 export interface GeolibreToolDoc {
   description?: string;
   toolbox?: string;

@@ -2,7 +2,7 @@
 
 GeoLab is a thin, didactic platform over a large body of open-source geospatial work. **Every tool in the
 app shows its source** (a provenance chip: engine · authors · license · version) and links here. We do not
-claim authorship of integrated engines — only of GeoLab itself and the tools under `packages/geolab-tools`.
+claim authorship of integrated engines, only of GeoLab itself and the tools under `packages/geolab-tools`.
 
 ## Compute engines integrated (or planned)
 
@@ -42,6 +42,6 @@ they ship as **separate, optional, lazily-loaded modules** with an explicit lice
 | jsgeoda / GeoDaLib | GeoDa (GeoDaCenter, Xun Li / Luc Anselin) | GPL-3.0 | optional module, segregated; or replaced by an MIT spatial-stats implementation |
 
 Weak-copyleft (LGPL/MPL) engines (GEOS, libvips, mapshaper) are used as **separate WASM/JS modules**
-(dynamic linking), with attribution preserved — compatible with an MIT application.
+(dynamic linking), with attribution preserved, compatible with an MIT application.
 
-_If we have miscredited or mislicensed anything, it is an error to be fixed — open an issue._
+_If we have miscredited or mislicensed anything, it is an error to be fixed, open an issue._

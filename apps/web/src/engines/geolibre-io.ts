@@ -1,7 +1,7 @@
 /**
  * Raster I/O via geolibre's OWN browser library (the wasm-bindgen `.` export). We use geolibre to WRITE
  * inputs (CogBuilder) and READ outputs (geotiff_read_band_f64) so the bytes round-trip exactly through the
- * same engine that the tools use — geotiff.js mis-encodes/mis-decodes geolibre's tiled COGs.
+ * same engine that the tools use: geotiff.js mis-encodes/mis-decodes geolibre's tiled COGs.
  *
  * This loads geolibre's browser-lib wasm (~4.4 MB), separate from the WASI tool runner (~17.6 MB).
  */

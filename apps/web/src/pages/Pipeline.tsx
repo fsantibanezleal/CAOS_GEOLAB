@@ -1,5 +1,5 @@
 /**
- * Pipeline editor — React Flow DAG of geolibre tools.
+ * Pipeline editor: React Flow DAG of geolibre tools.
  * Nodes = tools; edges = data connections (untyped at v0.10, any-to-any).
  * Run = topologicalOrder() + sequential worker execution.
  * Save/Load = Recipe JSON download/upload.
@@ -435,7 +435,7 @@ export function Pipeline() {
                 ))}
                 {filteredTools.length > 80 && (
                   <p className="muted" style={{ fontSize: '.8rem', padding: '.3rem .5rem' }}>
-                    {filteredTools.length - 80} more — refine search
+                    {filteredTools.length - 80} more, refine search
                   </p>
                 )}
               </div>

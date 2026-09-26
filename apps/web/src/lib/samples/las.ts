@@ -1,4 +1,4 @@
-/** Minimal LAS 1.2 (Point Data Record Format 0) writer — pure JS, little-endian. Engine reads LAS. */
+/** Minimal LAS 1.2 (Point Data Record Format 0) writer, pure JS, little-endian. Engine reads LAS. */
 import { mulberry32 } from './prng';
 
 export interface LasPoint {

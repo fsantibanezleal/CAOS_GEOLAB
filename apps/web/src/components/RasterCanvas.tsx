@@ -70,7 +70,7 @@ export function RasterCanvas({ grid, colormap, unit, decimals = 1, title }: Prop
       <div className="rreadout">
         {hover ? (
           <span>
-            [{hover.x},{hover.y}] <strong>{Number.isFinite(hover.v) ? hover.v.toFixed(decimals) : '—'}</strong>
+            [{hover.x},{hover.y}] <strong>{Number.isFinite(hover.v) ? hover.v.toFixed(decimals) : '–'}</strong>
             {unit ? ` ${unit}` : ''}
           </span>
         ) : (

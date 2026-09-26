@@ -6,12 +6,12 @@ build/
 .vite/
 coverage/
 
-# env / secrets (never commit secrets — commit .env.example only)
+# env / secrets (never commit secrets: commit .env.example only)
 .env
 .env.*
 !.env.example
 
-# offline pipeline (heavy data + venv kept OUT of git — ADR-0050/0055)
+# offline pipeline (heavy data + venv kept OUT of git: ADR-0050/0055)
 .venv/
 .venv-pipeline/
 data/raw/

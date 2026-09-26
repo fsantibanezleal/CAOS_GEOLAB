@@ -9,13 +9,13 @@ type Tab = 'theory' | 'impl' | 'contract' | 'usage';
 
 const CATEGORY_NOTE: Record<string, { en: string; es: string }> = {
   'terrain-morphometry': { en: 'Derives terrain form (slope, aspect, curvature, hillshade) from an elevation surface.', es: 'Deriva la forma del terreno (pendiente, orientación, curvatura, sombreado) desde una superficie de elevación.' },
-  hydrology: { en: 'Models how water moves over a DEM — depressions, flow direction/accumulation, watersheds.', es: 'Modela cómo el agua fluye sobre un DEM — depresiones, dirección/acumulación de flujo, cuencas.' },
+  hydrology: { en: 'Models how water moves over a DEM, depressions, flow direction/accumulation, watersheds.', es: 'Modela cómo el agua fluye sobre un DEM, depresiones, dirección/acumulación de flujo, cuencas.' },
   'stream-network': { en: 'Extracts and analyses channel networks from a flow-accumulation raster.', es: 'Extrae y analiza redes de canales desde un raster de acumulación de flujo.' },
-  'lidar-pointcloud': { en: 'Processes 3D LiDAR point clouds — filtering, classification, gridding to a surface.', es: 'Procesa nubes de puntos LiDAR 3D — filtrado, clasificación, interpolación a una superficie.' },
-  'imagery-remote-sensing': { en: 'Operates on multi-band imagery — indices, enhancement, classification.', es: 'Opera sobre imágenes multibanda — índices, realce, clasificación.' },
-  'vector-gis': { en: 'Classic vector GIS — overlays, buffers, geometry attributes, conversions.', es: 'GIS vectorial clásico — superposiciones, buffers, atributos de geometría, conversiones.' },
+  'lidar-pointcloud': { en: 'Processes 3D LiDAR point clouds, filtering, classification, gridding to a surface.', es: 'Procesa nubes de puntos LiDAR 3D, filtrado, clasificación, interpolación a una superficie.' },
+  'imagery-remote-sensing': { en: 'Operates on multi-band imagery, indices, enhancement, classification.', es: 'Opera sobre imágenes multibanda, índices, realce, clasificación.' },
+  'vector-gis': { en: 'Classic vector GIS, overlays, buffers, geometry attributes, conversions.', es: 'GIS vectorial clásico, superposiciones, buffers, atributos de geometría, conversiones.' },
   'raster-math-stats': { en: 'Per-cell math, reclassification and statistics over raster grids.', es: 'Matemática por celda, reclasificación y estadística sobre grillas raster.' },
-  'spatial-statistics': { en: 'Spatial statistics & geostatistics — interpolation, autocorrelation, variograms.', es: 'Estadística espacial y geoestadística — interpolación, autocorrelación, variogramas.' },
+  'spatial-statistics': { en: 'Spatial statistics & geostatistics, interpolation, autocorrelation, variograms.', es: 'Estadística espacial y geoestadística, interpolación, autocorrelación, variogramas.' },
   'data-io': { en: 'Reads, writes and converts geospatial formats between representations.', es: 'Lee, escribe y convierte formatos geoespaciales entre representaciones.' },
   'projections-crs': { en: 'Reprojects data and manages coordinate reference systems.', es: 'Reproyecta datos y gestiona sistemas de referencia de coordenadas.' },
   'ml-segmentation': { en: 'Machine-learning segmentation & classification of geospatial data.', es: 'Segmentación y clasificación de datos geoespaciales con machine learning.' },
@@ -116,7 +116,7 @@ export function ToolDetailModal({ tool, onClose }: { tool: Tool; onClose: () => 
               <dl className="tm-dl">
                 <dt>{isEs ? 'Motor' : 'Engine'}</dt><dd>{prov.engine} · {prov.upstreamProject}</dd>
                 <dt>{isEs ? 'Ejecución' : 'Runtime'}</dt>
-                <dd>{isWasm ? (isEs ? 'WebAssembly (WASI) en un Web Worker — UI responsiva' : 'WebAssembly (WASI) in a Web Worker — UI stays responsive') : (isEs ? 'JavaScript, hilo principal' : 'JavaScript, main thread')}</dd>
+                <dd>{isWasm ? (isEs ? 'WebAssembly (WASI) en un Web Worker, UI responsiva' : 'WebAssembly (WASI) in a Web Worker, UI stays responsive') : (isEs ? 'JavaScript, hilo principal' : 'JavaScript, main thread')}</dd>
                 <dt>{isEs ? 'Licencia' : 'License'}</dt><dd>{prov.license.spdx} ({prov.license.tier})</dd>
                 <dt>{isEs ? 'Versión' : 'Version'}</dt><dd>{prov.version ?? tool.version}</dd>
               </dl>
@@ -125,8 +125,8 @@ export function ToolDetailModal({ tool, onClose }: { tool: Tool; onClose: () => 
                 ? `runTool('${bareId}', {\n  args: [${[...inputParams.map(([k]) => `'--${k}=…'`), ...outputParams.map(([k]) => `'--${k}=/work/out${outExt}'`)].join(', ')}],\n  input: { /* your bytes under /work */ },\n})`
                 : `tool.run(ctx, { ${inputParams.map(([k]) => k).join(', ')} })`}</pre>
               <div className="tm-io">
-                <span className="chip">in: {inputKinds.length ? inputKinds.join(', ') : '—'}</span>
-                <span className="chip">out: {[...new Set(tool.outputs)].join(', ') || '—'}</span>
+                <span className="chip">in: {inputKinds.length ? inputKinds.join(', ') : '–'}</span>
+                <span className="chip">out: {[...new Set(tool.outputs)].join(', ') || '–'}</span>
               </div>
             </div>
           )}
@@ -135,20 +135,20 @@ export function ToolDetailModal({ tool, onClose }: { tool: Tool; onClose: () => 
             <div>
               <div className="tm-sub">{isEs ? 'Parámetros de entrada' : 'Input parameters'}</div>
               {inputParams.length === 0 ? (
-                <p className="tm-note">{isEs ? 'Sin parámetros — corre directamente.' : 'No parameters — runs directly.'}</p>
+                <p className="tm-note">{isEs ? 'Sin parámetros, corre directamente.' : 'No parameters, runs directly.'}</p>
               ) : (
                 <table className="tm-table">
                   <thead><tr><th>{isEs ? 'Nombre' : 'Name'}</th><th>{isEs ? 'Tipo' : 'Type'}</th><th>{isEs ? 'Req.' : 'Req.'}</th><th>{isEs ? 'Por defecto' : 'Default'}</th></tr></thead>
                   <tbody>
                     {inputParams.map(([key, spec]) => {
                       const required = spec.type !== 'boolean' && !('optional' in spec && spec.optional);
-                      const def = 'default' in spec && spec.default !== undefined ? String(spec.default) : '—';
+                      const def = 'default' in spec && spec.default !== undefined ? String(spec.default) : '–';
                       const pdoc = doc?.params.find((p) => p.flag === `--${key}` || p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === key.replace(/[^a-z0-9]/g, ''));
                       return (
                         <tr key={key}>
                           <td><span className="mono">--{key}</span>{pdoc?.description ? <div className="tm-pdesc">{pdoc.description}</div> : null}</td>
                           <td>{widgetType(spec, isEs)}</td>
-                          <td>{required ? '✓' : '—'}</td>
+                          <td>{required ? '✓' : '–'}</td>
                           <td className="mono">{def}</td>
                         </tr>
                       );
@@ -178,7 +178,7 @@ export function ToolDetailModal({ tool, onClose }: { tool: Tool; onClose: () => 
                 </li>
                 <li>{isEs ? 'Busca ' : 'Search for '}<span className="mono">{bareId}</span>{isEs ? ' en el toolbox y selecciónala.' : ' in the toolbox and select it.'}</li>
                 <li>{isEs ? 'Completa el formulario (capa, campo, parámetros) y pulsa ' : 'Fill the form (layer, field, parameters) and click '}<strong>{isEs ? 'Correr herramienta' : 'Run tool'}</strong>.</li>
-                <li>{isEs ? 'El resultado aparece como una capa nueva — descárgala con ↓.' : 'The result appears as a new layer — download it with ↓.'}</li>
+                <li>{isEs ? 'El resultado aparece como una capa nueva, descárgala con ↓.' : 'The result appears as a new layer, download it with ↓.'}</li>
               </ol>
               {inputKinds.length > 0 && (
                 <p className="tm-note">{isEs ? 'Entrada esperada: ' : 'Expected input: '}{inputKinds.map((k) => KIND_LABEL[k] ? (isEs ? KIND_LABEL[k]!.es : KIND_LABEL[k]!.en) : k).join(', ')}.</p>
